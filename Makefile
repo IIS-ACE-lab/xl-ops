@@ -27,7 +27,9 @@ GET_D_FILES := \
 	$(DATA)/get_D-31.txt \
 	$(DATA)/get_D-256.txt
 
-.PHONY: all build data tables formulas figures split-predictions metadata paper-artifacts clean-artifacts clean-data
+ERROR_DATA := data/raw/prediction-errors
+
+.PHONY: all build data tables formulas figures split-predictions prediction-error-artifacts metadata paper-artifacts clean-artifacts clean-data
 
 all: paper-artifacts
 
@@ -88,6 +90,16 @@ tables: data scripts/fukuoka_table.py scripts/security_levels_csv.py sage/get_D.
 		--latex \
 		--show-cost \
 		> $(ART)/tables/security_levels.tex
+
+
+prediction-error-artifacts: scripts/analyze_prediction_errors.py
+	test -d $(ERROR_DATA) || { echo "Missing $(ERROR_DATA). Generate or copy prediction-error logs first."; exit 1; }
+	mkdir -p $(ART)/tables $(ART)/figures
+	$(PYTHON) scripts/analyze_prediction_errors.py \
+		--input-dir $(ERROR_DATA) \
+		--table-output $(ART)/tables/prediction_error_table.tex \
+		--figure-output $(ART)/figures/prediction_error_plots.tex \
+		--quiet
 
 # --------------------------------------------------------------------
 # LaTeX formula snippets
