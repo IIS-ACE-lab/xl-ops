@@ -74,14 +74,6 @@ class Prediction:
 
     BM_extra_bits: float = 0.0
 
-    generic_formulas: Optional[dict] = None
-#    specialized_formulas: Optional[dict] = None
-
-#    total_bit_formula_generic: Optional[object] = None
-#    total_bit_formula_specialized: Optional[object] = None
-#    total_bit_formula_generic_concrete: Optional[object] = None
-#    total_bit_formula_specialized_concrete: Optional[object] = None
-
     bit_ops_total: float = 0.0
     bit_ops_breakdown: Optional[Dict[str, float]] = None
 
@@ -99,8 +91,6 @@ def run_xl_test(
     perm: Optional[int] = None,
     const: bool = False,
     bucket: bool = False,
-    exact_const: bool = False,
-    avg_const: bool = False,
     trace: bool = False,
 ) -> str:
     cmd = [exe, "-q", str(q), "-n", str(n), "-m", str(m), "-s", str(seed)]
@@ -111,10 +101,6 @@ def run_xl_test(
         cmd.append("-c")
     if bucket:
         cmd.append("-b")
-    if exact_const:
-        cmd.append("-e")
-    elif avg_const:
-        cmd.append("-a")
 #    if q==2:
 #        cmd.append("--GF2-opt")
     if trace:
@@ -381,28 +367,9 @@ def prediction_mode_name(q_value: int, const: bool, bucket: bool) -> str:
     return "non-binary baseline"
 
 
-def measured_cost_subs_from_bit_costs(bit_costs):
-    return {
-        C_A: real_or_int(bit_costs["add"]),
-        C_S: real_or_int(bit_costs["sub"]),
-        C_M: real_or_int(bit_costs["mul"]),
-        C_I: real_or_int(bit_costs["inv"]),
-        C_M_fixed: real_or_int(bit_costs["mul_const"]),
-    }
-
-
-def concretize_bit_cost_formula(expr, bit_costs):
-    return expr.subs(measured_cost_subs_from_bit_costs(bit_costs))
-
 
 def select_prediction(run: XLRun, const: bool, bucket: bool) -> Prediction:
     generic = select_generic_formulas(const=const, bucket=bucket)
-    specialized = select_field_specialized_formulas(run.q, const=const, bucket=bucket)
-
-#    total_generic = total_bit_formula(generic, run.q)
-#    total_specialized = total_bit_formula(specialized, run.q)
-#    total_generic_concrete = concretize_bit_cost_formula(total_generic, run.bit_costs)
-#    total_specialized_concrete = concretize_bit_cost_formula(total_specialized, run.bit_costs)
 
     R_val, Z_val = model_R_Z_numeric(run.q, run.n, run.m, run.D)
     numeric_subs = {
@@ -437,12 +404,6 @@ def select_prediction(run: XLRun, const: bool, bucket: bool) -> Prediction:
         I=float(numeric.get("I", 0)),
         M_fixed=float(numeric.get("M_fixed", 0)),
         BM_extra_bits=float(bm_extra),
-        generic_formulas=generic,
-#        specialized_formulas=specialized,
-#        total_bit_formula_generic=total_generic,
-#        total_bit_formula_specialized=total_specialized,
-#        total_bit_formula_generic_concrete=total_generic_concrete,
-#        total_bit_formula_specialized_concrete=total_specialized_concrete,
     )
 
 
@@ -697,15 +658,8 @@ def macaulay_mul_bit_ops_from_counts(run: XLRun) -> Optional[float]:
 
 
 # ---------------------------------------------------------------------------
-# Formatting and LaTeX helpers
+# Formatting helpers
 # ---------------------------------------------------------------------------
-
-def real_or_int(value):
-    value = float(value)
-    rounded_int = round(value)
-    if abs(value - rounded_int) < 1e-9:
-        return ZZ(rounded_int)
-    return RR(value)
 
 
 def rel_error(predicted: float, measured: float) -> float:
@@ -721,284 +675,6 @@ def fmt_intlike(value: float) -> str:
         return str(int(round(value)))
     return f"{value:.3f}"
 
-
-def shorten_decimal_token(token: str) -> str:
-    value = float(token)
-    rounded = round(value, 2)
-    if abs(rounded - round(rounded)) < 1e-9:
-        return str(int(round(rounded)))
-    return f"{rounded:.2f}".rstrip("0").rstrip(".")
-
-
-def shorten_decimal_string(match):
-    return shorten_decimal_token(match.group(0))
-
-
-_DECIMAL_RE = re.compile(r"(?<![A-Za-z_])[-+]?(?:\d+\.\d*|\d*\.\d+)(?:[eE][-+]?\d+)?")
-
-
-def short_decimal_text(text) -> str:
-    return _DECIMAL_RE.sub(shorten_decimal_string, str(text))
-
-
-def short_latex(expr) -> str:
-    return short_decimal_text(latex(expr))
-
-
-def choose_transform(transform_name: str):
-    if transform_name == "factor":
-        return factor
-    if transform_name == "expand":
-        return expand
-    if transform_name == "simplify":
-        return lambda x: x.simplify_full() if hasattr(x, "simplify_full") else x
-    return lambda x: x
-
-
-def simplify_bit_cost_expr(expr, keep_RZ=True):
-    """
-    For compact RZ bit-cost formulas, expand after concrete-cost substitution
-    so terms such as 92*(R_q+2)*R_q and 61.5*(R_q+1)*R_q combine.
-    """
-    e = SR(expr)
-    if keep_RZ:
-        e = e.expand()
-    return e
-
-
-def mode_suffix(const=False, bucket=False):
-    if const and bucket:
-        return "buck"
-    if const:
-        return "const"
-    return "base"
-
-
-def total_cost_lhs_latex(q_value, const=False, bucket=False, symbolic_q=False):
-    q_part = "q" if symbolic_q else str(q_value)
-    return r"C_{%s}^{\mathrm{%s}}" % (q_part, mode_suffix(const=const, bucket=bucket))
-
-
-def op_formula_lhs_latex(name, suffix):
-    lhs_name = "M_{\\mathrm{fixed}}" if name == "M_fixed" else name
-    return r"%s^{\mathrm{%s}}" % (lhs_name, suffix)
-
-
-def op_formulas_latex_block(const=False, bucket=False, transform=None):
-    if transform is None:
-        transform = lambda x: x
-
-    suffix = mode_suffix(const=const, bucket=bucket)
-    formulas = select_generic_formulas(const=const, bucket=bucket)
-    order = ["A", "S", "M", "M_fixed", "I"]
-
-    lines = [r"\begin{align*}"]
-    first = True
-    for name in order:
-        expr = formulas.get(name, 0)
-        if name == "M_fixed" and expr == 0:
-            continue
-
-        lhs = op_formula_lhs_latex(name, suffix)
-        rhs = short_latex(transform(expr))
-
-        if first:
-            lines.append(r"%s &= %s" % (lhs, rhs))
-            first = False
-        else:
-            lines.append(r"\\")
-            lines.append(r"%s &= %s" % (lhs, rhs))
-
-    lines.append(r"\end{align*}")
-    return "\n".join(lines)
-
-
-def total_bit_expr_for_output(
-    run: XLRun,
-    const=False,
-    bucket=False,
-    keep_RZ=True,
-    concrete_costs=True,
-):
-    formulas = (
-        select_generic_formulas(const=const, bucket=bucket)
-        if keep_RZ
-        else select_field_specialized_formulas(run.q, const=const, bucket=bucket)
-    )
-    expr = total_bit_formula(formulas, run.q)
-    if concrete_costs:
-        expr = concretize_bit_cost_formula(expr, run.bit_costs)
-    return expr
-
-
-def total_bit_formula_latex_block_from_run(
-    run: XLRun,
-    const=False,
-    bucket=False,
-    transform=None,
-    keep_RZ=True,
-    concrete_costs=True,
-):
-    if transform is None:
-        transform = lambda x: x
-
-    total = total_bit_expr_for_output(
-        run,
-        const=const,
-        bucket=bucket,
-        keep_RZ=keep_RZ,
-        concrete_costs=concrete_costs,
-    )
-
-    # Apply the requested transform first, then force expansion for compact RZ
-    # concrete-cost formulas so like terms combine.  Rounding is applied after
-    # this final simplification through short_latex(...).
-    total = transform(total)
-    if keep_RZ:
-        total = simplify_bit_cost_expr(total, keep_RZ=True)
-
-    lhs = total_cost_lhs_latex(
-        run.q,
-        const=const,
-        bucket=bucket,
-        symbolic_q=not concrete_costs,
-    )
-    rhs = short_latex(total)
-
-    return "\n".join([
-        r"\begin{align*}",
-        r"%s &= %s" % (lhs, rhs),
-        r"\end{align*}",
-    ])
-
-
-## Backward-compatible wrapper with explicit failure: run is needed for measured costs.
-#def total_bit_formula_latex_block(qq, const=False, bucket=False, transform=None):
-#    raise RuntimeError(
-#        "total_bit_formula_latex_block now needs the parsed run so it can "
-#        "substitute measured cost factors. Use total_bit_formula_latex_block_from_run(run, ...)."
-#    )
-
-
-def print_operation_formulas_generic(pred: Prediction, transform_name: str = "none") -> None:
-    transform = choose_transform(transform_name)
-    print()
-    print("Operation-count formulas with symbolic R_q and Z_q")
-    print("==================================================")
-    print(f"mode: {pred.mode}")
-    print(f"transform: {transform_name}")
-
-    for name in ["A", "S", "M", "M_fixed", "I"]:
-        expr = pred.generic_formulas.get(name, 0) if pred.generic_formulas else 0
-        if name == "M_fixed" and expr == 0:
-            continue
-        e = transform(expr)
-        print()
-        print(name)
-        print("-" * len(name))
-        print("Sage:")
-        print(short_decimal_text(e))
-        print()
-        print("LaTeX:")
-        print(short_latex(e))
-
-
-def print_total_bit_formula(
-    pred: Prediction,
-    run: XLRun,
-    const=False,
-    bucket=False,
-    transform_name: str = "none",
-    keep_RZ: bool = True,
-    concrete_costs: bool = True,
-) -> None:
-    transform = choose_transform(transform_name)
-    expr = total_bit_expr_for_output(
-        run,
-        const=const,
-        bucket=bucket,
-        keep_RZ=keep_RZ,
-        concrete_costs=concrete_costs,
-    )
-    expr = transform(expr)
-    if keep_RZ:
-        expr = simplify_bit_cost_expr(expr, keep_RZ=True)
-
-    lhs = total_cost_lhs_latex(
-        run.q,
-        const=const,
-        bucket=bucket,
-        symbolic_q=not concrete_costs,
-    )
-
-    print()
-    print("Total bit-operation formula")
-    print("===========================")
-    print(f"mode: {pred.mode}")
-    print(f"field: q={run.q}")
-    print(f"transform: {transform_name}")
-    print(f"keep_RZ: {keep_RZ}")
-    print(f"concrete_costs: {concrete_costs}")
-
-    print()
-    print("Sage:")
-    print(short_decimal_text(expr))
-
-    print()
-    print("LaTeX:")
-    print(r"%s &= %s" % (lhs, short_latex(expr)))
-
-
-## Backward-compatible name.
-#def print_total_bit_formula_specialized(pred: Prediction, transform_name: str = "none") -> None:
-#    print("print_total_bit_formula_specialized now needs the parsed run. Use print_total_bit_formula(...).")
-
-
-def write_text_file(path, text):
-    directory = os.path.dirname(path)
-    if directory:
-        os.makedirs(directory, exist_ok=True)
-    with open(path, "w") as handle:
-        handle.write(text)
-        handle.write("\n")
-
-
-def export_formula_tex_files(
-    out_dir,
-    run: XLRun,
-    transform=None,
-    keep_RZ=True,
-    concrete_costs=True,
-):
-    modes = [
-        ("base", False, False),
-        ("const", True, False),
-        ("buck", True, True),
-    ]
-
-    rz_tag = "RZ" if keep_RZ else "expanded"
-    cost_tag = f"q{run.q}" if concrete_costs else "symbolic-costs"
-
-    for suffix, const, bucket in modes:
-        op_tex = op_formulas_latex_block(
-            const=const,
-            bucket=bucket,
-            transform=transform,
-        )
-        write_text_file(os.path.join(out_dir, f"op-formulas-{suffix}.tex"), op_tex)
-
-        bit_tex = total_bit_formula_latex_block_from_run(
-            run,
-            const=const,
-            bucket=bucket,
-            transform=transform,
-            keep_RZ=keep_RZ,
-            concrete_costs=concrete_costs,
-        )
-        write_text_file(
-            os.path.join(out_dir, f"bit-cost-{suffix}-{cost_tag}-{rz_tag}.tex"),
-            bit_tex,
-        )
 
 
 
@@ -1800,7 +1476,7 @@ def main() -> None:
         description="Run XL-test and compare measured costs to Sage prediction formulas."
     )
 
-    ap.add_argument("--exe", default="./XL-test", help="Path to XL-test executable")
+    ap.add_argument("--exe", default="../src/bin/XL-test", help="Path to XL-test executable")
     ap.add_argument("-q", "--field", type=int, required=True)
     ap.add_argument("-n", type=int, required=True)
     ap.add_argument("-m", type=int, required=True)
@@ -1809,30 +1485,9 @@ def main() -> None:
 
     ap.add_argument("-c", "--const", action="store_true")
     ap.add_argument("-b", "--bucket", action="store_true")
-    ap.add_argument("-a", "--avg", action="store_true")
-    ap.add_argument("-e", "--exact", action="store_true")
     ap.add_argument("--trace", action="store_true")
 
     ap.add_argument("--show-raw", action="store_true", help="Print raw XL-test output before the report")
-    ap.add_argument("--print-op-formulas", action="store_true", help="Print A, S, M, I, M_fixed formulas with symbolic R_q and Z_q")
-    ap.add_argument("--print-total-bit-formula", action="store_true", help="Print total bit-operation formula")
-    ap.add_argument("--export-formula-tex", metavar="DIR", help="Export LaTeX snippets for operation and bit-cost formulas")
-    ap.add_argument(
-        "--formula-transform",
-        choices=["none", "factor", "expand", "simplify"],
-        default="none",
-        help="Transformation to apply before printing/exporting formulas",
-    )
-    ap.add_argument(
-        "--specialize-bit-formulas",
-        action="store_true",
-        help="Substitute R_q and Z_q in bit-cost formulas by field-specific R/Z expressions",
-    )
-    ap.add_argument(
-        "--symbolic-cost-factors",
-        action="store_true",
-        help="Keep C_A, C_S, C_M, C_I, C_M_fixed symbolic instead of using measured costs",
-    )
     ap.add_argument(
         "--use-macaulay-runtime-data",
         action="store_true",
@@ -1861,11 +1516,6 @@ def main() -> None:
             "measured values set to 0."
         ),
     )
-
-    # Backward-compatible aliases.
-    ap.add_argument("--print-formulas", action="store_true", help=argparse.SUPPRESS)
-    ap.add_argument("--factor-formulas", action="store_true", help=argparse.SUPPRESS)
-    ap.add_argument("--expand-formulas", action="store_true", help=argparse.SUPPRESS)
 
     args = ap.parse_args()
 
@@ -1911,8 +1561,6 @@ def main() -> None:
         perm=args.perm,
         const=args.const,
         bucket=args.bucket,
-        exact_const=args.exact,
-        avg_const=args.avg,
         trace=args.trace,
     )
 
@@ -1946,40 +1594,6 @@ def main() -> None:
 
     if args.show_raw:
         print(raw)
-
-    transform_name = args.formula_transform
-    if args.factor_formulas:
-        transform_name = "factor"
-    elif args.expand_formulas:
-        transform_name = "expand"
-    transform = choose_transform(transform_name)
-
-    keep_RZ = not args.specialize_bit_formulas
-    concrete_costs = not args.symbolic_cost_factors
-
-    if args.print_op_formulas or args.print_formulas:
-        print_operation_formulas_generic(pred, transform_name=transform_name)
-
-    if args.print_total_bit_formula:
-        print_total_bit_formula(
-            pred,
-            run,
-            const=args.const,
-            bucket=args.bucket,
-            transform_name=transform_name,
-            keep_RZ=keep_RZ,
-            concrete_costs=concrete_costs,
-        )
-
-    if args.export_formula_tex:
-        export_formula_tex_files(
-            args.export_formula_tex,
-            run,
-            transform=transform,
-            keep_RZ=keep_RZ,
-            concrete_costs=concrete_costs,
-        )
-        print(f"Wrote formula LaTeX files to {args.export_formula_tex}")
 
     print_report(run, pred, const=args.const, bucket=args.bucket)
 
