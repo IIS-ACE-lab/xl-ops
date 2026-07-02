@@ -1,47 +1,8 @@
-A  sage/get_D.sage
-A  sage/xl_cost_compare.sage
-A  sage/xl_cost_formulas.sage
-AD sage/xl_formula_latex.sage
-A  sage/xl_predict_range.sage
-A  src/.gitignore
-A  src/GF16-const.h
-A  src/GF16.h
-A  src/GF2-const.h
-A  src/GF2.h
-A  src/GF256-const.h
-A  src/GF256.cpp
-A  src/GF256.h
-A  src/GF31-const.h
-A  src/GF31-fop.h
-A  src/GF31.cpp
-A  src/GF31.h
-A  src/Makefile
-A  src/PRNG.cpp
-A  src/PRNG.h
-A  src/XL-test.cpp
-A  src/XL.h
-A  src/bigint.h
-A  src/bigint_mpz.cpp
-A  src/bigint_mpz.h
-A  src/bit.cpp
-A  src/bit.h
-A  src/bit_cost.h
-A  src/bit_vector.h
-A  src/field.h
-A  src/fips202.cpp
-A  src/fips202.h
-A  src/get_D.cpp
-A  src/index.cpp
-A  src/index.h
-A  src/monomial.h
-A  src/ram.cpp
-A  src/ram.h
-A  src/util.h
-?? Makefile
-?? data/
-?? paper-artifacts/
-?? sage/xl_cost_compare.sage.py
-?? sage/xl_latex_formulas.sage
-?? sage/xl_latex_formulas.sage.py
-?? sage/xl_predict_range.sage.py
-?? scripts/
+ M data/processed/predictions-allq-m2n-n010-400.csv
+ M paper-artifacts/CODE_STATUS
+ M paper-artifacts/CODE_VERSION
+ M paper-artifacts/data/predictions-allq-m2n-n010-400.csv
+ M paper-artifacts/figures/data/XL-test-2.txt
+ M paper-artifacts/figures/data/XL-test-256.txt
+ M paper-artifacts/figures/data/XL-test-31.txt
+ M paper-artifacts/figures/quotient_convergence_grid.tex
