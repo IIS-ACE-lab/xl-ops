@@ -96,23 +96,26 @@ tables: data scripts/fukuoka_table.py scripts/security_levels_csv.py sage/get_D.
 formulas: build sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage
 	mkdir -p $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
-		--table-I \
+		--table-I --style single-fraction \
 		> $(ART)/formulas/table-I.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
-		--table-II \
+		--table-II --style sage \
 		> $(ART)/formulas/table-II.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
-		--all-base \
+		--all-base --style sage \
 		> $(ART)/formulas/op-formulas-base.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
-		--all-const \
+		--all-const --style sage \
 		> $(ART)/formulas/op-formulas-const.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
-		--all-const-bucket \
+		--all-const-bucket --style sage \
 		> $(ART)/formulas/op-formulas-const-bucket.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
-		--extra-BM \
+		--extra-BM --style factor \
 		> $(ART)/formulas/bm-extra.tex
+	$(SAGE) sage/xl_latex_formulas.sage \
+		--bit-costs --xl-test $(XLTEST) --style sage --inline-extra-BM \
+		> $(ART)/formulas/all-bit-ops.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--op-cost \
 		--xl-test $(XLTEST) \
