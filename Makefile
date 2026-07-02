@@ -102,6 +102,15 @@ formulas: build sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage
 		--table-II \
 		> $(ART)/formulas/table-II.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
+		--all-base \
+		> $(ART)/formulas/op-formulas-base.tex
+	$(SAGE) sage/xl_latex_formulas.sage \
+		--all-const \
+		> $(ART)/formulas/op-formulas-const.tex
+	$(SAGE) sage/xl_latex_formulas.sage \
+		--all-const-bucket \
+		> $(ART)/formulas/op-formulas-const-bucket.tex
+	$(SAGE) sage/xl_latex_formulas.sage \
 		--extra-BM \
 		> $(ART)/formulas/bm-extra.tex
 	$(SAGE) sage/xl_latex_formulas.sage \
