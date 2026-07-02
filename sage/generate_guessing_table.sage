@@ -149,12 +149,19 @@ def row_group(scheme):
 def write_latex_table(rows, exe, out="-", min_n=10):
     lines = []
 
-    lines.append(r"\begin{tabular}{lrrrrrrr}")
+    lines.append(r"\begin{tabular}{@{}lrrrlrlrrrr@{}}")
     lines.append(r"\toprule")
-    lines.append(
-        r"Scheme & $n$ & $m$ & WXL & $C_{\mathrm{base}}$ "
-        r"& $C_{\mathrm{c}}$ & $C_{\mathrm{c+b}}$ & $k$ \\"
-    )
+    lines.append(r" \multicolumn{1}{@{}c}{Scheme}")
+    lines.append(r" & \multicolumn{1}{c}{\(q\)}")
+    lines.append(r" & \multicolumn{1}{c}{\(n\)}")
+    lines.append(r" & \multicolumn{1}{c}{\(m\)}")
+    lines.append(r" &")
+    lines.append(r" & \multicolumn{1}{c}{WXL}")
+    lines.append(r" &")
+    lines.append(r" & \multicolumn{1}{c}{\(C_{\mathrm{base}}\)}")
+    lines.append(r" & \multicolumn{1}{c}{\(C_{\mathrm{c}}\)}")
+    lines.append(r" & \multicolumn{1}{c}{\(C_{\mathrm{c+b}}\)}")
+    lines.append(r" & \multicolumn{1}{c@{}}{\(k\)} \\")
     lines.append(r"\midrule")
 
     prev_group = None
@@ -181,7 +188,7 @@ def write_latex_table(rows, exe, out="-", min_n=10):
         k_value = bests[2]["k"]
 
         lines.append(
-            rf"{scheme} & {table_n} & {m} & {fmt_wxl(wxl)} "
+            rf"{scheme} & {q} & {table_n} & {m} & & {fmt_wxl(wxl)} & "
             rf"& {bests[0]['log2_total']:.1f} "
             rf"& {bests[1]['log2_total']:.1f} "
             rf"& {bests[2]['log2_total']:.1f} "
