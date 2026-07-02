@@ -76,7 +76,7 @@ data: $(PRED_CSV) $(GET_D_FILES)
 # Paper tables
 # --------------------------------------------------------------------
 
-tables: data scripts/fukuoka_table.py scripts/security_levels_csv.py sage/get_D.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage
+tables: data scripts/fukuoka_table.py scripts/security_levels_csv.py sage/get_D.sage sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage
 	mkdir -p $(ART)/tables $(ART)/data
 	cp $(PRED_CSV) $(ART)/data/predictions-allq-m2n-n010-400.csv
 	cp $(GET_D_FILES) $(ART)/data/
@@ -90,6 +90,10 @@ tables: data scripts/fukuoka_table.py scripts/security_levels_csv.py sage/get_D.
 		--latex \
 		--show-cost \
 		> $(ART)/tables/security_levels.tex
+	$(SAGE) sage/generate_guessing_table.sage \
+		--compare-file sage/xl_cost_compare.sage \
+		--exe $(XLTEST) \
+		--output $(ART)/tables/guessing_table.tex
 
 
 prediction-error-artifacts: scripts/analyze_prediction_errors.py
