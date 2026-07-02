@@ -53,3 +53,7 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# generated sage.py files
+*.sage.py
+
