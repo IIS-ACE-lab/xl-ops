@@ -1,8 +1,15 @@
+ M Makefile
  M data/processed/predictions-allq-m2n-n010-400.csv
  M paper-artifacts/CODE_STATUS
  M paper-artifacts/CODE_VERSION
  M paper-artifacts/data/predictions-allq-m2n-n010-400.csv
+ M paper-artifacts/figures/data/XL-test-2-c-b.txt
  M paper-artifacts/figures/data/XL-test-2.txt
  M paper-artifacts/figures/data/XL-test-256.txt
+ M paper-artifacts/figures/data/XL-test-31-c-b.txt
  M paper-artifacts/figures/data/XL-test-31.txt
+ D paper-artifacts/figures/prediction_error_plots.tex
  M paper-artifacts/figures/quotient_convergence_grid.tex
+ D paper-artifacts/tables/prediction_error_table.tex
+?? data/raw/
+?? paper-artifacts/figures/data/.split-done

@@ -3,11 +3,9 @@
 # Main target:
 #   make paper-artifacts
 #
-# This builds XL-test, generates prediction data, get_D lookup files,
-# LaTeX tables, LaTeX formula snippets, figure snippets, and provenance
-# metadata under:
-#
-#   paper-artifacts/
+# Generated files are real Make targets. Aggregate targets such as
+# data, tables, formulas, figures, and paper-artifacts have no recipes,
+# so make only regenerates files whose prerequisites changed.
 
 SAGE := sage
 PYTHON := python3
@@ -29,23 +27,89 @@ GET_D_FILES := \
 
 ERROR_DATA := data/raw/prediction-errors
 
-.PHONY: all build data tables formulas figures split-predictions prediction-error-artifacts metadata paper-artifacts clean-artifacts clean-data
+SPLIT_PRED_DIR := $(ART)/figures/data
+
+TABLE_FILES := \
+	$(ART)/tables/fukuoka_table.tex \
+	$(ART)/tables/security_levels.tex \
+	$(ART)/tables/guessing_table.tex
+
+FORMULA_FILES := \
+	$(ART)/formulas/table-I.tex \
+	$(ART)/formulas/table-II.tex \
+	$(ART)/formulas/op-formulas-base.tex \
+	$(ART)/formulas/op-formulas-const.tex \
+	$(ART)/formulas/op-formulas-const-bucket.tex \
+	$(ART)/formulas/bm-extra.tex \
+	$(ART)/formulas/all-bit-ops.tex \
+	$(ART)/formulas/op-costs.tex
+
+FIGURE_FILES := \
+	$(ART)/figures/quotient_convergence_grid.tex
+
+PAPER_DATA_FILES := \
+	$(ART)/data/predictions-allq-m2n-n010-400.csv \
+	$(ART)/data/get_D-2.txt \
+	$(ART)/data/get_D-31.txt \
+	$(ART)/data/get_D-256.txt
+
+SPLIT_SENTINEL := $(SPLIT_PRED_DIR)/.split-done
+
+METADATA_FILES := \
+	$(ART)/CODE_VERSION \
+	$(ART)/CODE_STATUS
+
+.PHONY: all build data tables formulas figures split-predictions \
+        prediction-error-artifacts metadata paper-artifacts \
+        clean-artifacts clean-data
 
 all: paper-artifacts
 
 # --------------------------------------------------------------------
-# Build C implementation
+# Directory targets
 # --------------------------------------------------------------------
 
-build:
+$(DATA):
+	mkdir -p $@
+
+$(ART):
+	mkdir -p $@
+
+$(ART)/data:
+	mkdir -p $@
+
+$(ART)/tables:
+	mkdir -p $@
+
+$(ART)/formulas:
+	mkdir -p $@
+
+$(ART)/figures:
+	mkdir -p $@
+
+$(SPLIT_PRED_DIR):
+	mkdir -p $@
+
+# --------------------------------------------------------------------
+# Build C implementation
+# --------------------------------------------------------------------
+#
+# The binary target is real. If your src/Makefile has better dependency
+# tracking, this still delegates to it. The wildcard prerequisites are enough
+# to cause the top-level Makefile to rebuild when typical C sources change.
+
+SRC_FILES := $(wildcard src/*.c src/*.h src/**/*.c src/**/*.h src/Makefile)
+
+$(XLTEST): $(SRC_FILES)
 	$(MAKE) -C src
+
+build: $(XLTEST)
 
 # --------------------------------------------------------------------
 # Prediction CSV
 # --------------------------------------------------------------------
 
-$(PRED_CSV): build sage/xl_predict_range.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage
-	mkdir -p $(DATA)
+$(PRED_CSV): $(XLTEST) sage/xl_predict_range.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage | $(DATA)
 	$(SAGE) sage/xl_predict_range.sage \
 		--compare-file sage/xl_cost_compare.sage \
 		--exe $(XLTEST) \
@@ -58,8 +122,7 @@ $(PRED_CSV): build sage/xl_predict_range.sage sage/xl_cost_compare.sage sage/xl_
 # get_D lookup files required by security_levels_csv.py
 # --------------------------------------------------------------------
 
-$(DATA)/get_D-%.txt: sage/get_D.sage
-	mkdir -p $(DATA)
+$(DATA)/get_D-%.txt: sage/get_D.sage | $(DATA)
 	q=$*; \
 	{ \
 	  echo "import sys"; \
@@ -73,101 +136,141 @@ $(DATA)/get_D-%.txt: sage/get_D.sage
 data: $(PRED_CSV) $(GET_D_FILES)
 
 # --------------------------------------------------------------------
+# Copy processed data into paper-artifacts/data
+# --------------------------------------------------------------------
+
+$(ART)/data/predictions-allq-m2n-n010-400.csv: $(PRED_CSV) | $(ART)/data
+	cp $< $@
+
+$(ART)/data/get_D-%.txt: $(DATA)/get_D-%.txt | $(ART)/data
+	cp $< $@
+
+# --------------------------------------------------------------------
 # Paper tables
 # --------------------------------------------------------------------
 
-tables: data scripts/fukuoka_table.py scripts/security_levels_csv.py sage/get_D.sage sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage
-	mkdir -p $(ART)/tables $(ART)/data
-	cp $(PRED_CSV) $(ART)/data/predictions-allq-m2n-n010-400.csv
-	cp $(GET_D_FILES) $(ART)/data/
+$(ART)/tables/fukuoka_table.tex: scripts/fukuoka_table.py sage/get_D.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
 	$(PYTHON) scripts/fukuoka_table.py \
 		--get-d sage/get_D.sage \
 		--xl-test "$(SAGE) sage/xl_cost_compare.sage --exe $(XLTEST)" \
-		> $(ART)/tables/fukuoka_table.tex
+		> $@
+
+$(ART)/tables/security_levels.tex: scripts/security_levels_csv.py $(PRED_CSV) $(GET_D_FILES) | $(ART)/tables
 	$(PYTHON) scripts/security_levels_csv.py \
 		--csv $(PRED_CSV) \
 		--get-d-dir $(DATA) \
 		--latex \
 		--show-cost \
-		> $(ART)/tables/security_levels.tex
+		> $@
+
+$(ART)/tables/guessing_table.tex: sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
 	$(SAGE) sage/generate_guessing_table.sage \
 		--compare-file sage/xl_cost_compare.sage \
 		--exe $(XLTEST) \
-		--output $(ART)/tables/guessing_table.tex
+		--output $@
 
+tables: $(TABLE_FILES) $(PAPER_DATA_FILES)
 
-prediction-error-artifacts: scripts/analyze_prediction_errors.py
+# --------------------------------------------------------------------
+# Optional prediction-error artifacts
+# --------------------------------------------------------------------
+
+$(ART)/tables/prediction_error_table.tex $(ART)/figures/prediction_error_plots.tex: scripts/analyze_prediction_errors.py | $(ART)/tables $(ART)/figures
 	test -d $(ERROR_DATA) || { echo "Missing $(ERROR_DATA). Generate or copy prediction-error logs first."; exit 1; }
-	mkdir -p $(ART)/tables $(ART)/figures
 	$(PYTHON) scripts/analyze_prediction_errors.py \
 		--input-dir $(ERROR_DATA) \
 		--table-output $(ART)/tables/prediction_error_table.tex \
 		--figure-output $(ART)/figures/prediction_error_plots.tex \
 		--quiet
 
+prediction-error-artifacts: $(ART)/tables/prediction_error_table.tex $(ART)/figures/prediction_error_plots.tex
+
 # --------------------------------------------------------------------
 # LaTeX formula snippets
 # --------------------------------------------------------------------
 
-formulas: build sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage
-	mkdir -p $(ART)/formulas
+$(ART)/formulas/table-I.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--table-I --style single-fraction \
-		> $(ART)/formulas/table-I.tex
+		> $@
+
+$(ART)/formulas/table-II.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--table-II --style sage \
-		> $(ART)/formulas/table-II.tex
+		> $@
+
+$(ART)/formulas/op-formulas-base.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--all-base --style sage \
-		> $(ART)/formulas/op-formulas-base.tex
+		> $@
+
+$(ART)/formulas/op-formulas-const.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--all-const --style sage \
-		> $(ART)/formulas/op-formulas-const.tex
+		> $@
+
+$(ART)/formulas/op-formulas-const-bucket.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--all-const-bucket --style sage \
-		> $(ART)/formulas/op-formulas-const-bucket.tex
+		> $@
+
+$(ART)/formulas/bm-extra.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--extra-BM --style factor \
-		> $(ART)/formulas/bm-extra.tex
+		> $@
+
+$(ART)/formulas/all-bit-ops.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--bit-costs --xl-test $(XLTEST) --style sage --inline-extra-BM \
-		> $(ART)/formulas/all-bit-ops.tex
+		> $@
+
+$(ART)/formulas/op-costs.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--op-cost \
 		--xl-test $(XLTEST) \
-		> $(ART)/formulas/op-costs.tex
+		> $@
+
+formulas: $(FORMULA_FILES)
 
 # --------------------------------------------------------------------
-# Figure snippets
+# Figure data and figure snippets
 # --------------------------------------------------------------------
 
-SPLIT_PRED_DIR := $(ART)/figures/data
-
-split-predictions: data scripts/split_predictions.sh
-	mkdir -p $(SPLIT_PRED_DIR)
+$(SPLIT_SENTINEL): $(PRED_CSV) scripts/split_predictions.sh | $(SPLIT_PRED_DIR)
 	bash scripts/split_predictions.sh $(PRED_CSV) $(SPLIT_PRED_DIR)
+	touch $@
 
-figures: data split-predictions scripts/quotient_convergence_grid_csv.py
-	mkdir -p $(ART)/figures
+split-predictions: $(SPLIT_SENTINEL)
+
+$(ART)/figures/quotient_convergence_grid.tex: scripts/quotient_convergence_grid_csv.py $(PRED_CSV) $(GET_D_FILES) | $(ART)/figures
 	$(PYTHON) scripts/quotient_convergence_grid_csv.py \
 		--csv $(PRED_CSV) \
 		--get-d-dir $(DATA) \
-		--output $(ART)/figures/quotient_convergence_grid.tex
+		--output $@
+
+figures: $(FIGURE_FILES) split-predictions
 
 # --------------------------------------------------------------------
 # Provenance metadata
 # --------------------------------------------------------------------
+#
+# These files are intentionally regenerated when you explicitly ask for
+# metadata or paper-artifacts. They are small and cheap. They should not
+# trigger table/formula/figure regeneration.
 
-metadata:
-	mkdir -p $(ART)
-	git rev-parse HEAD > $(ART)/CODE_VERSION
-	git status --short > $(ART)/CODE_STATUS
+$(ART)/CODE_VERSION: | $(ART)
+	git rev-parse HEAD > $@
+
+$(ART)/CODE_STATUS: | $(ART)
+	git status --short > $@
+
+metadata: $(METADATA_FILES)
 
 # --------------------------------------------------------------------
 # Top-level artifact target
 # --------------------------------------------------------------------
 
-paper-artifacts: tables formulas figures metadata
+paper-artifacts: tables formulas figures prediction-error-artifacts metadata
 
 # --------------------------------------------------------------------
 # Cleaning
