@@ -154,7 +154,11 @@ def run_xl_test_f_cost(exe: str, n_value: int, m_value, q_value: int) -> str:
 def require_match(pattern: str, text: str, name: str) -> re.Match:
     match = re.search(pattern, text, re.MULTILINE)
     if not match:
-        raise ValueError(f"Could not parse {name} using pattern: {pattern}")
+        excerpt = "\n".join(text.splitlines()[:40])
+        raise ValueError(
+            f"Could not parse {name} using pattern: {pattern}\n"
+            f"First lines of XL-test output were:\n{excerpt}"
+        )
     return match
 
 
@@ -234,6 +238,16 @@ def parse_macaulay_mul_counts(text: str) -> Optional[Dict[str, int]]:
 
     return counts if found else None
 
+AUTO_INT_RE = r"(0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+|0[oO]?[0-7]+|\d+)"
+
+def parse_int_auto_base(s: str) -> int:
+    """Parse decimal, hex (0x...), binary (0b...), or octal (0o...) integers."""
+    try:
+        return int(s, 0)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(
+            f"invalid integer value {s!r}; use decimal, 0x..., 0b..., or 0o..."
+        ) from e
 
 def parse_output(text: str) -> XLRun:
     header = require_match(
@@ -241,7 +255,13 @@ def parse_output(text: str) -> XLRun:
         text,
         "header",
     )
-    seed_match = require_match(r"^seed:\s*(\d+)", text, "seed")
+
+    seed_match = require_match(
+        rf"^\s*seed\s*:\s*({AUTO_INT_RE})\b",
+        text,
+        "seed",
+    )
+    
     dims = require_match(
         r"^n\s+(\d+)\s+d\s+(\d+)\s+ncols\s+(\d+)\s+nrows\s+(\d+)",
         text,
@@ -268,7 +288,7 @@ def parse_output(text: str) -> XLRun:
         n=int(header.group(2)),
         m=int(header.group(3)),
         D=int(header.group(4)),
-        seed=int(seed_match.group(1)),
+        seed=parse_int_auto_base(seed_match.group(1)),
         ncols=int(dims.group(3)),
         nrows=int(dims.group(4)),
         bit_costs=parse_bit_costs(text),
@@ -1480,7 +1500,7 @@ def main() -> None:
     ap.add_argument("-q", "--field", type=int, required=True)
     ap.add_argument("-n", type=int, required=True)
     ap.add_argument("-m", type=int, required=True)
-    ap.add_argument("-s", "--seed", type=int, default=0)
+    ap.add_argument("-s", "--seed", type=parse_int_auto_base, default=0)
     ap.add_argument("--perm", type=int)
 
     ap.add_argument("-c", "--const", action="store_true")

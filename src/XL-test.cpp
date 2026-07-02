@@ -117,7 +117,7 @@ void print_help(const char* program_name) {
 
 int main(int argc, char* argv[])
 {
-   int seed = 0;
+   uint64_t seed = 0;
 
    int field = 256;
 

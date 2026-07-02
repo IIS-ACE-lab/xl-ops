@@ -40,7 +40,6 @@ Options:
   --q2-n-max N           last n for GF(2) [default: $Q2_N_MAX]
   --q31-256-n-min N      first n for GF(31), GF(256) [default: $Q31_256_N_MIN]
   --q31-256-n-max N      last n for GF(31), GF(256) [default: $Q31_256_N_MAX]
-  --no-gf2-opt           do not pass --GF2-opt for q=2
   -h, --help             show this help
 
 Environment variables with the same uppercase names can also be used.
@@ -60,7 +59,6 @@ while [[ $# -gt 0 ]]; do
     --q2-n-max) Q2_N_MAX=$2; shift 2 ;;
     --q31-256-n-min) Q31_256_N_MIN=$2; shift 2 ;;
     --q31-256-n-max) Q31_256_N_MAX=$2; shift 2 ;;
-    --no-gf2-opt) USE_GF2_OPT=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -79,10 +77,6 @@ run_one() {
   seed="0x$hex"
   printf -v num "%02d" "$n"
   m=$((M_FACTOR * n))
-
-  if [[ "$q" == "2" && "$USE_GF2_OPT" != "0" ]]; then
-    flags+=(--GF2-opt)
-  fi
 
   case "$mode" in
     plain)
