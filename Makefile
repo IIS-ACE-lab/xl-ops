@@ -26,6 +26,9 @@ GET_D_FILES := \
 	$(DATA)/get_D-256.txt
 
 ERROR_DATA := data/raw/prediction-errors
+ERROR_DATA_STAMP := $(ERROR_DATA)/.generated
+ERROR_TABLE := $(ART)/tables/prediction_error_table.tex
+ERROR_FIGURE := $(ART)/figures/prediction_error_plots.tex
 
 SPLIT_PRED_DIR := $(ART)/figures/data
 
@@ -61,7 +64,7 @@ METADATA_FILES := \
 
 .PHONY: all build data tables formulas figures split-predictions \
         prediction-error-artifacts metadata paper-artifacts \
-        clean-artifacts clean-data
+        clean-artifacts clean-data clean-error-data
 
 all: paper-artifacts
 
@@ -175,15 +178,24 @@ tables: $(TABLE_FILES) $(PAPER_DATA_FILES)
 # Optional prediction-error artifacts
 # --------------------------------------------------------------------
 
-$(ART)/tables/prediction_error_table.tex $(ART)/figures/prediction_error_plots.tex: scripts/analyze_prediction_errors.py | $(ART)/tables $(ART)/figures
-	test -d $(ERROR_DATA) || { echo "Missing $(ERROR_DATA). Generate or copy prediction-error logs first."; exit 1; }
+$(ERROR_DATA_STAMP): scripts/gen_prediction_error_data.sh sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST)
+	mkdir -p $(ERROR_DATA)
+	bash scripts/gen_prediction_error_data.sh \
+		--out-dir $(ERROR_DATA) \
+		--sage $(SAGE) \
+		--compare sage/xl_cost_compare.sage \
+		--xl-test $(XLTEST) \
+		--jobs 90% \
+		--repeats 100
+
+$(ERROR_TABLE) $(ERROR_FIGURE): scripts/analyze_prediction_errors.py $(ERROR_DATA_STAMP) | $(ART)/tables $(ART)/figures
 	$(PYTHON) scripts/analyze_prediction_errors.py \
 		--input-dir $(ERROR_DATA) \
-		--table-output $(ART)/tables/prediction_error_table.tex \
-		--figure-output $(ART)/figures/prediction_error_plots.tex \
+		--table-output $(ERROR_TABLE) \
+		--figure-output $(ERROR_FIGURE) \
 		--quiet
 
-prediction-error-artifacts: $(ART)/tables/prediction_error_table.tex $(ART)/figures/prediction_error_plots.tex
+prediction-error-artifacts: $(ERROR_TABLE) $(ERROR_FIGURE)
 
 # --------------------------------------------------------------------
 # LaTeX formula snippets
@@ -281,4 +293,7 @@ clean-artifacts:
 
 clean-data:
 	rm -rf $(DATA)
+
+clean-error-data:
+	rm -rf $(ERROR_DATA)
 
