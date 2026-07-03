@@ -177,7 +177,7 @@ def print_table_II(tex):
 
     print(r"\[")
     print(r"\begin{array}{l|cccc}")
-    print(r" & A & M & M^{\mathrm{fix}} \\")
+    print(r" & A & M & M_{\mathrm{fixed}} \\")
     print(r"\hline")
 
 
@@ -434,7 +434,7 @@ def print_operation_cost_table(xl_test_path):
 
     for q_value, c in rows:
         c_gt1 = mul_const_gt1_cost(q_value, c["mul_const"])
-        c_gt1_tex = 0 if c_gt1 is None else fmt_cost_value(c_gt1)
+        c_gt1_tex = r"\text{--}" if c_gt1 is None else fmt_cost_value(c_gt1)
 
         print(
             rf"${field_name_latex(q_value)}$ "
