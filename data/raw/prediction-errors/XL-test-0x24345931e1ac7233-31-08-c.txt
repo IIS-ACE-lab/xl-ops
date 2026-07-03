@@ -1,0 +1,69 @@
+q: 31  n: 8  m: 16  D: 4
+
+seed: 2608808154928804403
+field: 31
+const cost mode: average
+
+bit ops add: 41
+bit ops dbl: 32
+bit ops sub: 46
+bit ops mul: 207
+bit ops inv: 1449
+
+avg bit ops mul const: 153.74193548387098
+
+sol: [21, 20, 9, 16, 18, 28, 10, 26]
+
+n 8  d 4  ncols 495  nrows 720
+num_cols: 495
+entries per row (before drop):
+44: 16
+45: 704
+
+entries per row (after drop):
+44: 16
+45: 478
+
+entries per row:
+44: 16
+45: 478
+
+
+Macaulay mul bit ops: 3383629
+Macaulay not zero: 21490
+Macaulay structural not zero: 22214
+
+Macaulay mul field add: 32005
+Macaulay mul field dbl: 64732
+Macaulay mul field sub: 0
+Macaulay mul field mul: 0
+Macaulay mul field inv: 0
+
+
+got: [21, 20, 9, 16, 18, 28, 10, 26]
+
+bit ops: 4505245286
+bm bit ops: 265585515
+LA bit ops: 4238575761
+
+GF:
+field add: 53884900
+field dbl: 63890484
+field sub: 367289
+field mul: 1105827
+field inv: 1
+
+field mixed mul: 21925218
+
+
+GF:
+field add: 53884900 (pred 22295965)
+field dbl: 63890484 (pred 63890484)
+field sub: 367289 (pred 367289)
+field mul: 1105827 (pred 1105820)
+field inv: 1 (pred 1)
+field mixed mul: 21925218 (pred 21925218)
+
+bit ops: 4505245286 (pred 4536428914)
+BM bit ops: 265585515 (pred 265585515)
+LA bit ops: 4238575761 (pred 4269759389)

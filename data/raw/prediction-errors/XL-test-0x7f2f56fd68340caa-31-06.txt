@@ -1,0 +1,55 @@
+q: 31  n: 6  m: 12  D: 3
+
+seed: 9164639413097204906
+field: 31
+const cost mode: average
+
+bit ops add: 41
+bit ops dbl: 32
+bit ops sub: 46
+bit ops mul: 207
+bit ops inv: 1449
+
+avg bit ops mul const: 153.74193548387098
+
+sol: [26, 7, 18, 20, 25, 15]
+
+n 6  d 3  ncols 84  nrows 84
+num_cols: 84
+entries per row (before drop):
+27: 12
+28: 72
+
+entries per row (after drop):
+27: 12
+28: 71
+
+entries per row:
+27: 12
+28: 71
+
+
+got: [26, 7, 18, 20, 25, 15]
+
+bit ops: 102371852
+bm bit ops: 7622471
+LA bit ops: 94607040
+
+GF:
+field add: 392436
+field dbl: 0
+field sub: 10541
+field mul: 413609
+field inv: 1
+
+
+GF:
+field add: 392436 (pred 392436)
+field dbl: 0 (pred 0)
+field sub: 10541 (pred 10541)
+field mul: 413609 (pred 413602)
+field inv: 1 (pred 1)
+
+bit ops: 102371852 (pred 102371852)
+BM bit ops: 7622471 (pred 7622471)
+LA bit ops: 94607040 (pred 94607040)
