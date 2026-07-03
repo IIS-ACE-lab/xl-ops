@@ -427,7 +427,7 @@ def print_operation_cost_table(xl_test_path):
          r"S[table-format=3.2]@{\hspace*{1em}}"
          r"S[table-format=3.2]}")
     print(r"\toprule")
-    print(r"{Field} & {\(q\)} & {add} & {sub} & {mul} & {inv} "
+    print(r"{Field} & {\(q\)} & {\makecell{add\\\(a_q\)}} & {\makecell{sub\\\(s_q\)}} & {\makecell{mul\\\(m_q\)}} & {\makecell{inv\\\(i_q\)}} "
           r"& {\makecell{mul const\\\(\mu_q\)}} "
           r"& {\makecell{bucket mul const\\\(\mu_q q/(q-2)\)}} \\")
     print(r"\midrule")
