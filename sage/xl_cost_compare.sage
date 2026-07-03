@@ -427,14 +427,54 @@ def select_prediction(run: XLRun, const: bool, bucket: bool) -> Prediction:
     )
 
 
-def attach_bit_cost_prediction(pred: Prediction, run: XLRun) -> Prediction:
+def mul_const_cost_for_prediction(run: XLRun, const: bool, bucket: bool) -> float:
+    """
+    Effective bit cost for the M_fixed operation count.
+
+    In plain const mode, M_fixed counts multiplications by Macaulay
+    constants and uses the average constant-multiplication cost reported by
+    XL-test.
+
+    In const+bucket mode, M_fixed counts only bucket-combine
+    multiplications by constants 2,...,q-1.  The average reported by
+    XL-test is over all q field elements, with constants 0 and 1 costing
+    zero, so the conditional average over constants >1 is
+
+        c_mul_const,>1 = c_mul_const * q/(q-2).
+
+    For GF(2), there are no constants >1 and M_fixed should be zero.
+    """
+    if not const:
+        return 0.0
+
+    c = float(run.bit_costs.get("mul_const", 0.0))
+
+    if not bucket:
+        return c
+
+    if run.q == 2:
+        return 0.0
+
+    return c * float(run.q) / float(run.q - 2)
+
+
+def attach_bit_cost_prediction(
+    pred: Prediction,
+    run: XLRun,
+    const: bool = False,
+    bucket: bool = False,
+) -> Prediction:
     c = run.bit_costs
 
     add_cost = pred.A * c["add"]
     sub_cost = pred.S * c["sub"]
     mul_cost = pred.M * c["mul"]
     inv_cost = pred.I * c["inv"]
-    fixed_mul_cost = pred.M_fixed * c["mul_const"]
+    fixed_mul_cost = pred.M_fixed * mul_const_cost_for_prediction(
+        run,
+        const=const,
+        bucket=bucket,
+    )
     bm_extra_cost = pred.BM_extra_bits
 
     total = (
@@ -571,8 +611,10 @@ def apply_runtime_data_for_regular_prediction(
 
     Const+bucket mode:
         replace the expected nonzero-entry contribution in A_W by the
-        actual 'Macaulay not zero' diagnostic, and replace c_mul_const by
-        the average const-multiplication cost conditioned on constants > 1.
+        actual 'Macaulay not zero' diagnostic.  The >1-conditioned
+        constant-multiplication cost is handled by
+        mul_const_cost_for_prediction(), so this function does not overwrite
+        run.bit_costs["mul_const"] in bucket mode.
 
     The function mutates run before select_prediction()/attach_bit_cost_prediction()
     are called.  The nominal symbolic formulas remain the source of the
@@ -620,20 +662,10 @@ def apply_runtime_data_for_regular_prediction(
     )
     run.bucket_A_W_from_data = float(A_W_data)
 
-    if run.q == 2:
-        # There are no constants > 1 in GF(2), and M_fixed should be zero.
-        run.bit_costs["mul_const"] = 0.0
-    else:
-        gt1 = mul_const_cost_gt1_from_nominal(
-            run.q,
-            run.nominal_mul_const_cost,
-        )
-        if gt1 is None:
-            raise SystemExit(
-                "Could not derive const-multiplication cost conditioned on constants > 1."
-            )
-        run.bit_costs["mul_const"] = float(gt1)
-#        run.mul_const_cost_from_data = True
+    # Do not overwrite run.bit_costs["mul_const"] here.  Bucket mode uses
+    # the nominal average as stored in run.bit_costs and applies the
+    # q/(q-2) conditioning factor exactly once in
+    # mul_const_cost_for_prediction().
 
 
 def apply_data_dependent_prediction_adjustments(
@@ -811,7 +843,11 @@ def predicted_la_counts_and_bits(run: XLRun, const: bool, bucket: bool):
     bit_ops = (
         A_W_val * run.bit_costs["add"]
         + A_M_val * run.bit_costs["mul"]
-        + M_W_fixed_val * run.bit_costs["mul_const"]
+        + M_W_fixed_val * mul_const_cost_for_prediction(
+            run,
+            const=const,
+            bucket=bucket,
+        )
     )
 
     counts = {
@@ -1560,7 +1596,7 @@ def main() -> None:
             bucket=args.bucket,
         )
     
-        pred = attach_bit_cost_prediction(pred, run)
+        pred = attach_bit_cost_prediction(pred, run, const=args.const, bucket=args.bucket)
 
         print(raw_f_cost, end="" if raw_f_cost.endswith("\n") else "\n")
     
@@ -1600,7 +1636,7 @@ def main() -> None:
         const=args.const,
         bucket=args.bucket,
     )
-    pred = attach_bit_cost_prediction(pred, run)
+    pred = attach_bit_cost_prediction(pred, run, const=args.const, bucket=args.bucket)
 
     if args.wrapper:
         print(raw, end="" if raw.endswith("\n") else "\n")

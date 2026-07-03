@@ -275,6 +275,7 @@ def print_extra_BM(tex):
             return expr.subs({
                 R_q: R_2,
                 k: ell_2,
+                g: field_bit_width(q_value),
             })
 
         return expr.subs({
@@ -385,6 +386,21 @@ def fmt_cost_value(x, max_decimals=2):
     return s
 
 
+def mul_const_gt1_cost(q_value, c_mul_const):
+    """
+    Average constant-multiplication bit cost conditioned on constants > 1.
+
+    The bucket combination step only multiplies by constants 2,...,q-1.
+    If c_mul_const is the average over all q constants, the conditional
+    average is c_mul_const * q/(q-2) for q > 2.
+    For GF(2), there are no such bucket multiplications.
+    """
+    if q_value == 2:
+        return None
+
+    return float(c_mul_const) * float(q_value) / float(q_value - 2)
+
+
 def field_name_latex(q_value):
     return rf"\text{{GF}}({q_value})"
 
@@ -402,26 +418,33 @@ def print_operation_cost_table(xl_test_path):
         costs = parse_f_cost_output(out)
         rows.append((q_value, costs))
 
-    print(r"\begin{tabular}{lcccc@{\hspace*{1em}}c}")
+    print(r"\begin{tabular}{l@{\hspace*{1em}}"
+         r"S[table-format=3]@{\hspace*{1em}}"
+         r"S[table-format=2]"
+         r"S[table-format=2]"
+         r"S[table-format=3]"
+         r"S[table-format=4]@{\hspace*{1em}}"
+         r"S[table-format=3.2]@{\hspace*{1em}}"
+         r"S[table-format=3.2]}")
     print(r"\toprule")
-    print(
-        r"Field "
-        r"& $c_{\mathrm{add}}$ "
-        r"& $c_{\mathrm{sub}}$ "
-        r"& $c_{\mathrm{mul}}$ "
-        r"& $c_{\mathrm{inv}}$ "
-        r"& $c_{\mathrm{mul\text{-}const}}$ \\"
-    )
+    print(r"{Field} & {\(q\)} & {add} & {sub} & {mul} & {inv} "
+          r"& {\makecell{mul const\\\(\mu_q\)}} "
+          r"& {\makecell{bucket mul const\\\(\mu_q q/(q-2)\)}} \\")
     print(r"\midrule")
 
     for q_value, c in rows:
+        c_gt1 = mul_const_gt1_cost(q_value, c["mul_const"])
+        c_gt1_tex = 0 if c_gt1 is None else fmt_cost_value(c_gt1)
+
         print(
             rf"${field_name_latex(q_value)}$ "
-            rf"& ${fmt_cost_value(c['add'])}$ "
-            rf"& ${fmt_cost_value(c['sub'])}$ "
-            rf"& ${fmt_cost_value(c['mul'])}$ "
-            rf"& ${fmt_cost_value(c['inv'])}$ "
-            rf"& ${fmt_cost_value(c['mul_const'])}$ \\"
+            rf"& {q_value} "
+            rf"& {fmt_cost_value(c['add'])} "
+            rf"& {fmt_cost_value(c['sub'])} "
+            rf"& {fmt_cost_value(c['mul'])} "
+            rf"& {fmt_cost_value(c['inv'])} "
+            rf"& {fmt_cost_value(c['mul_const'])} "
+            rf"& {c_gt1_tex} \\"
         )
 
     print(r"\bottomrule")
@@ -517,13 +540,79 @@ def compact_bit_cost_expr(expr):
     return expand(SR(expr))
 
 
-def tex_with_ell_names(s):
+def tex_with_pretty_names(s):
     """
-    Replace Sage's default LaTeX for variables named ell/ell_2 by actual \\ell.
+    Replace Sage's default LaTeX for selected variable names.
     """
     s = s.replace(r"\mathit{ell}_{2}", r"\ell_2")
     s = s.replace(r"\mathit{ell}_2", r"\ell_2")
     s = s.replace(r"\mathit{ell}", r"\ell")
+
+    s = s.replace(r"\mathit{mu}_{2}", r"\mu_2")
+    s = s.replace(r"\mathit{mu}_2", r"\mu_2")
+    s = s.replace(r"\mathit{mu}_{31}", r"\mu_{31}")
+    s = s.replace(r"\mathit{mu}_{256}", r"\mu_{256}")
+
+    return s
+
+
+def insert_bucket_mu_factor(s, q_value, variant):
+    """
+    Presentation-only rewrite for const+bucket bit-cost formulas.
+
+    In the symbolic expression, mu_q denotes the ordinary average
+    constant-multiplication cost.  For bucket fixed multiplications, the
+    bit-cost factor is q/(q-2) * mu_q.
+
+    This is applied after line breaking so it does not interfere with
+    the line-breaking heuristic.
+    """
+    if variant != "buck" or q_value == 2:
+        return s
+
+    factor = rf"\frac{{{q_value}}}{{{q_value - 2}}}"
+    return s.replace(
+        rf"\mu_{{{q_value}}}",
+        rf"\mu_{{{q_value}}}{factor}",
+    )
+
+
+def specialize_bit_cost_expr_for_field(expr, q_value):
+    """
+    Presentation-only specialization for field-specific bit-cost formulas.
+
+    We substitute concrete field-size constants q and g=ceil(log_2(q))
+    while keeping R_q and Z_q symbolic.  The latter are renamed to
+    R_2/R_31/R_256 and Z_2/Z_31/Z_256 at the LaTeX-string level.
+    """
+    return SR(expr).subs({
+        q: ZZ(q_value),
+        g: ZZ(field_bit_width(q_value)),
+    })
+
+
+def insert_field_specific_RZ_names(s, q_value):
+    """
+    Replace generic R_q, Z_q by field-specific R_2, R_31, R_256, etc.
+    """
+    q_tex = str(q_value)
+
+    replacements = [
+        (r"R_{q}", rf"R_{{{q_tex}}}"),
+        (r"Z_{q}", rf"Z_{{{q_tex}}}"),
+        (r"R_q", rf"R_{{{q_tex}}}"),
+        (r"Z_q", rf"Z_{{{q_tex}}}"),
+        (r"R_{\mathit{q}}", rf"R_{{{q_tex}}}"),
+        (r"Z_{\mathit{q}}", rf"Z_{{{q_tex}}}"),
+        (r"\mathit{R}_{q}", rf"R_{{{q_tex}}}"),
+        (r"\mathit{Z}_{q}", rf"Z_{{{q_tex}}}"),
+        (r"\mathit{R}_{\mathit{q}}", rf"R_{{{q_tex}}}"),
+        (r"\mathit{Z}_{\mathit{q}}", rf"Z_{{{q_tex}}}"),
+    ]
+
+    for old, new in replacements:
+        s = s.replace(old, new)
+
     return s
 
 
@@ -535,7 +624,7 @@ def tex_round_floats(expr, tex, decimals=2):
     import re
 
     s = tex(expr)
-    s = tex_with_ell_names(s)
+    s = tex_with_pretty_names(s)
 
     def repl(m):
         x = float(m.group(0))
@@ -596,20 +685,74 @@ def latex_broken_rhs(rhs, terms_per_line=6, indent=r"&\quad "):
         return rhs
 
     lines = []
-    for i in range(0, len(terms), terms_per_line):
-        chunk = terms[i:i + terms_per_line]
-        line = " ".join(chunk)
+#    for i in range(0, len(terms), terms_per_line):
+#        chunk = terms[i:i + terms_per_line]
+#        line = " ".join(chunk)
+#
+#        if i == 0:
+#            lines.append(r"&" + line)
+#        else:
+#            lines.append(indent + line)
 
-        if i == 0:
-            lines.append(r"&" + line)
-        else:
-            lines.append(indent + line)
+    chunk = terms[0:terms_per_line]
+    line = " ".join(chunk)
+
+    lines.append(r"&" + line)
+
+    chunk = terms[terms_per_line:]
+    line = " ".join(chunk)
+
+    lines.append(indent + line)
 
     return (
         r"\begin{aligned}[t]" + "\n"
         + (r" \\" + "\n").join(lines) + "\n"
         + r"\end{aligned}"
     )
+
+
+def format_bit_cost_rhs(
+    rhs_expr,
+    tex,
+    q_value,
+    variant,
+    decimals=2,
+):
+    """
+    Format a bit-cost RHS.
+
+    Order matters:
+      1. Substitute the concrete field size q.
+      2. Convert the Sage expression to LaTeX with atomic mu_q.
+      3. Rename R_q/Z_q to field-specific R_2/R_31/R_256 and Z_*. 
+      4. Break the additive expression into lines.
+      5. Insert the bucket-only q/(q-2) factor next to mu_q.
+
+    This keeps the line-breaking heuristic from seeing the extra fraction,
+    but avoids leaving standalone q in field-specific formulas.
+    """
+    rhs_expr = specialize_bit_cost_expr_for_field(rhs_expr, q_value)
+
+    rhs = tex_round_floats(
+        rhs_expr,
+        tex,
+        decimals=decimals,
+    )
+
+    rhs = insert_field_specific_RZ_names(rhs, q_value)
+
+    rhs = latex_broken_rhs(
+        rhs,
+        BIT_COST_TERMS_PER_LINE.get((q_value, variant), 6),
+    )
+
+    rhs = insert_bucket_mu_factor(
+        rhs,
+        q_value=q_value,
+        variant=variant,
+    )
+
+    return rhs
 
 
 # Per-field/per-variant line-breaking policy for --bit-costs.
@@ -624,15 +767,15 @@ def latex_broken_rhs(rhs, terms_per_line=6, indent=r"&\quad "):
 BIT_COST_TERMS_PER_LINE = {
     (2,   "base"): 10,
     (2,   "const"): 10,
-    (2,   "buck"): 6,
+    (2,   "buck"): 10,
 
-    (31,  "base"): 10,
-    (31,  "const"): 6,
-    (31,  "buck"): 6,
+    (31,  "base"): 4,
+    (31,  "const"): 5,
+    (31,  "buck"): 5,
 
-    (256, "base"): 10,
-    (256, "const"): 6,
-    (256, "buck"): 6,
+    (256, "base"): 4,
+    (256, "const"): 5,
+    (256, "buck"): 4,
 }
 
 
@@ -646,7 +789,11 @@ def print_one_bit_cost_formula(
 ):
     formulas = variant_formulas(variant)
 
-    expr = concrete_cost_formula_from_components(formulas, costs, q_value)
+    expr = concrete_cost_formula_from_components(
+        formulas,
+        costs,
+        q_value=q_value,
+    )
 
     if inline_extra_BM:
         # Presentation-only symbols.
@@ -657,6 +804,7 @@ def print_one_bit_cost_formula(
         if q_value == 2:
             extra = extra.subs({
                 k: ell_2,
+                g: field_bit_width(q_value),
             })
         else:
             extra = extra.subs({
@@ -665,25 +813,28 @@ def print_one_bit_cost_formula(
             })
 
         expr = expr + extra
-        rhs = tex_round_floats(
-            compact_bit_cost_expr(expr),
+        rhs_expr = compact_bit_cost_expr(expr)
+        rhs = format_bit_cost_rhs(
+            rhs_expr,
             tex,
+            q_value=q_value,
+            variant=variant,
             decimals=decimals,
         )
     else:
-        rhs = tex_round_floats(
-            compact_bit_cost_expr(expr),
+        rhs_expr = compact_bit_cost_expr(expr)
+        rhs = format_bit_cost_rhs(
+            rhs_expr,
             tex,
+            q_value=q_value,
+            variant=variant,
             decimals=decimals,
         )
         rhs = rhs + r" + " + extra_BM_symbol(q_value)
 
     lhs = field_lhs_symbol(q_value, variant)
 
-    rhs = latex_broken_rhs(rhs, BIT_COST_TERMS_PER_LINE.get((q_value, variant)))
-
     print(rf"{lhs} &= {rhs}")
-
 
 def print_bit_cost_formulas(
     tex,
