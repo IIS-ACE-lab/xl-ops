@@ -1,9 +1,9 @@
-\begin{tabular}{lcccc@{\hspace*{1em}}c}
+\begin{tabular}{l@{\hspace*{1em}}S[table-format=3]@{\hspace*{1em}}S[table-format=2]S[table-format=2]S[table-format=3]S[table-format=4]@{\hspace*{1em}}S[table-format=3.2]@{\hspace*{1em}}S[table-format=3.2]}
 \toprule
-Field & $c_{\mathrm{add}}$ & $c_{\mathrm{sub}}$ & $c_{\mathrm{mul}}$ & $c_{\mathrm{inv}}$ & $c_{\mathrm{mul\text{-}const}}$ \\
+{Field} & {\(q\)} & {add} & {sub} & {mul} & {inv} & {\makecell{mul const\\\(\mu_q\)}} & {\makecell{bucket mul const\\\(\mu_q q/(q-2)\)}} \\
 \midrule
-$\text{GF}(2)$ & $1$ & $1$ & $1$ & $0$ & $0$ \\
-$\text{GF}(31)$ & $41$ & $46$ & $207$ & $1449$ & $153.74$ \\
-$\text{GF}(256)$ & $8$ & $8$ & $132$ & $752$ & $38.75$ \\
+$\text{GF}(2)$ & 2 & 1 & 1 & 1 & 0 & 0 & 0 \\
+$\text{GF}(31)$ & 31 & 41 & 46 & 207 & 1449 & 153.74 & 164.34 \\
+$\text{GF}(256)$ & 256 & 8 & 8 & 132 & 752 & 38.75 & 39.06 \\
 \bottomrule
 \end{tabular}

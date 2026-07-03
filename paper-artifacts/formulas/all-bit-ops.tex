@@ -1,63 +1,63 @@
 \paragraph{GF(2), baseline model.}%
 %
 \begin{flalign*}
-B_2^{\mathrm{base}} &= \frac{9}{2} \, R_{q}^{2} g + \frac{15}{2} \, R_{q}^{2} + 4 \, R_{q} Z_{q} + 28 \, R_{q} \ell_2 + \frac{31}{2} \, R_{q} g + 2 \, R_{q} n - \frac{33}{2} \, R_{q} - 2 \, Z_{q} + 1
+B_2^{\mathrm{base}} &= 12 \, R_{2}^{2} + 4 \, R_{2} Z_{2} + 28 \, R_{2} \ell_2 + 2 \, R_{2} n - R_{2} - 2 \, Z_{2} + 1
 \end{flalign*}
 \paragraph{GF(2), const model.}%
 %
 \begin{flalign*}
-B_2^{\mathrm{const}} &= \frac{9}{2} \, R_{q}^{2} g + \frac{15}{2} \, R_{q}^{2} + 2 \, R_{q} Z_{q} + 28 \, R_{q} \ell_2 + \frac{31}{2} \, R_{q} g + 2 \, R_{q} n - \frac{33}{2} \, R_{q} - Z_{q} + 1
+B_2^{\mathrm{const}} &= 12 \, R_{2}^{2} + 2 \, R_{2} Z_{2} + 28 \, R_{2} \ell_2 + 2 \, R_{2} n - R_{2} - Z_{2} + 1
 \end{flalign*}
 \paragraph{GF(2), const+bucket model.}%
 %
 \begin{flalign*}
-B_2^{\mathrm{buck}} &= \begin{aligned}[t]
-&\frac{9}{2} \, R_{q}^{2} g + 2 \, R_{q}^{2} q + \frac{7}{2} \, R_{q}^{2} + 2 \, R_{q} Z_{q} + 28 \, R_{q} \ell_2 + \frac{31}{2} \, R_{q} g \\
-&\quad + 2 \, R_{q} n - R_{q} q - \frac{29}{2} \, R_{q} - Z_{q} - \frac{2 \, R_{q} Z_{q}}{q} + \frac{Z_{q}}{q} \\
-&\quad + 1
-\end{aligned}
+B_2^{\mathrm{buck}} &= 12 \, R_{2}^{2} + R_{2} Z_{2} + 28 \, R_{2} \ell_2 + 2 \, R_{2} n - R_{2} - \frac{1}{2} \, Z_{2} + 1
 \end{flalign*}
 \paragraph{GF(31), baseline model.}%
 %
 \begin{flalign*}
-C_{31}^{\mathrm{base}} &= \frac{2169}{2} \, R_{q}^{2} + 496 \, R_{q} Z_{q} + 28 \, R_{q} \ell + 248 \, R_{q} n + \frac{3557}{2} \, R_{q} - 248 \, Z_{q} + 1656
+C_{31}^{\mathrm{base}} &= \begin{aligned}[t]
+&\frac{2169}{2} \, R_{31}^{2} + 496 \, R_{31} Z_{31} + 28 \, R_{31} \ell + 248 \, R_{31} n \\
+&\quad + \frac{3557}{2} \, R_{31} - 248 \, Z_{31} + 1656
+\end{aligned}
 \end{flalign*}
 \paragraph{GF(31), const model.}%
 %
 \begin{flalign*}
 C_{31}^{\mathrm{const}} &= \begin{aligned}[t]
-&2 \, R_{q} Z_{q} \mu_{31} + \frac{2169}{2} \, R_{q}^{2} + 82 \, R_{q} Z_{q} + 28 \, R_{q} \ell - Z_{q} \mu_{31} + 248 \, R_{q} n \\
-&\quad + \frac{3557}{2} \, R_{q} - 41 \, Z_{q} + 1656
+&2 \, R_{31} Z_{31} \mu_{31} + \frac{2169}{2} \, R_{31}^{2} + 82 \, R_{31} Z_{31} + 28 \, R_{31} \ell - Z_{31} \mu_{31} \\
+&\quad + 248 \, R_{31} n + \frac{3557}{2} \, R_{31} - 41 \, Z_{31} + 1656
 \end{aligned}
 \end{flalign*}
 \paragraph{GF(31), const+bucket model.}%
 %
 \begin{flalign*}
 C_{31}^{\mathrm{buck}} &= \begin{aligned}[t]
-&2 \, R_{q}^{2} \mu_{31} q - 4 \, R_{q}^{2} \mu_{31} + 82 \, R_{q}^{2} q - R_{q} \mu_{31} q + \frac{1841}{2} \, R_{q}^{2} + 82 \, R_{q} Z_{q} \\
-&\quad + 28 \, R_{q} \ell + 2 \, R_{q} \mu_{31} + 248 \, R_{q} n - 41 \, R_{q} q + \frac{3721}{2} \, R_{q} - 41 \, Z_{q} \\
-&\quad - \frac{82 \, R_{q} Z_{q}}{q} + \frac{41 \, Z_{q}}{q} + 1656
+&58 \, R_{31}^{2} \mu_{31}\frac{31}{29} + \frac{6925}{2} \, R_{31}^{2} + \frac{2460}{31} \, R_{31} Z_{31} + 28 \, R_{31} \ell - 29 \, R_{31} \mu_{31}\frac{31}{29} \\
+&\quad + 248 \, R_{31} n + \frac{1179}{2} \, R_{31} - \frac{1230}{31} \, Z_{31} + 1656
 \end{aligned}
 \end{flalign*}
 \paragraph{GF(256), baseline model.}%
 %
 \begin{flalign*}
-C_{256}^{\mathrm{base}} &= 654 \, R_{q}^{2} + 280 \, R_{q} Z_{q} + 28 \, R_{q} \ell + 140 \, R_{q} n + 1118 \, R_{q} - 140 \, Z_{q} + 884
+C_{256}^{\mathrm{base}} &= \begin{aligned}[t]
+&654 \, R_{256}^{2} + 280 \, R_{256} Z_{256} + 28 \, R_{256} \ell + 140 \, R_{256} n \\
+&\quad + 1118 \, R_{256} - 140 \, Z_{256} + 884
+\end{aligned}
 \end{flalign*}
 \paragraph{GF(256), const model.}%
 %
 \begin{flalign*}
 C_{256}^{\mathrm{const}} &= \begin{aligned}[t]
-&2 \, R_{q} Z_{q} \mu_{256} + 654 \, R_{q}^{2} + 16 \, R_{q} Z_{q} + 28 \, R_{q} \ell - Z_{q} \mu_{256} + 140 \, R_{q} n \\
-&\quad + 1118 \, R_{q} - 8 \, Z_{q} + 884
+&2 \, R_{256} Z_{256} \mu_{256} + 654 \, R_{256}^{2} + 16 \, R_{256} Z_{256} + 28 \, R_{256} \ell - Z_{256} \mu_{256} \\
+&\quad + 140 \, R_{256} n + 1118 \, R_{256} - 8 \, Z_{256} + 884
 \end{aligned}
 \end{flalign*}
 \paragraph{GF(256), const+bucket model.}%
 %
 \begin{flalign*}
 C_{256}^{\mathrm{buck}} &= \begin{aligned}[t]
-&2 \, R_{q}^{2} \mu_{256} q - 4 \, R_{q}^{2} \mu_{256} + 16 \, R_{q}^{2} q - R_{q} \mu_{256} q + 622 \, R_{q}^{2} + 16 \, R_{q} Z_{q} \\
-&\quad + 28 \, R_{q} \ell + 2 \, R_{q} \mu_{256} + 140 \, R_{q} n - 8 \, R_{q} q + 1134 \, R_{q} - 8 \, Z_{q} \\
-&\quad - \frac{16 \, R_{q} Z_{q}}{q} + \frac{8 \, Z_{q}}{q} + 884
+&508 \, R_{256}^{2} \mu_{256}\frac{256}{254} + 4718 \, R_{256}^{2} + \frac{255}{16} \, R_{256} Z_{256} + 28 \, R_{256} \ell \\
+&\quad - 254 \, R_{256} \mu_{256}\frac{256}{254} + 140 \, R_{256} n - 914 \, R_{256} - \frac{255}{32} \, Z_{256} + 884
 \end{aligned}
 \end{flalign*}
