@@ -1,20 +1,26 @@
-\begin{tabular}{@{}lrrr@{\hspace*{1cm}}lrrr@{}}
+\begin{tabular}{@{}lrrrrr@{\hspace*{0.8cm}}lrrrrr@{}}
 \toprule
-Type & $n$ & $\log_2(base)$ & $\log_2(\text{c+b})$ & Type & $n$ & $\log_2(base)$ & $\log_2(\text{c+b})$ \\
+Type & $n$ & $D$ & $k$ & base & c+b & Type & $m$ & $D$ & $k$ & base & c+b \\
 \toprule
-\multirow{4}{*}{\shortstack{\textbf{Type I}  \\$\mathrm{GF}(2)$\\$m=2n$}} & $80$ & $83.28$ & $81.29$ & \multirow{4}{*}{\shortstack{\textbf{Type IV}\\$\mathrm{GF}(2)$\\$n\approx1.5m$}} & $75$ & $75.76$ & $73.78$ \\
- & $83$ & $90.40$ & $88.40$ &  & $76$ & $76.40$ & $74.41$ \\
- & $99$ & $102.02$ & $100.02$ &  & $99$ & $89.50$ & $87.50$ \\
- & $100$ & $102.35$ & $100.35$ &  & $100$ & $90.02$ & $88.03$ \\
+\multirow{6}{*}{\shortstack{\textbf{Type I}  \\$\mathrm{GF}(2)$\\$m=2n$}} & \multicolumn{5}{c}{\emph{largest broken challenges}} & \multirow{6}{*}{\shortstack{\textbf{Type IV}\\$\mathrm{GF}(2)$\\$n\approx1.5m$}} & \multicolumn{5}{c}{\emph{largest broken challenges}} \\
+ & $80$ & $6$ & $17$ & $82.14$ & $80.15$ &  & $75$ & $3$ & $54$ & $84.96$ & $83.02$ \\
+ & $83$ & $6$ & $19$ & $84.47$ & $82.47$ &  & $76$ & $3$ & $55$ & $85.96$ & $84.02$ \\
+ & \multicolumn{5}{c}{\emph{largest provided challenges}} &  & \multicolumn{5}{c}{\emph{largest provided challenges}} \\
+ & $99$ & $7$ & $19$ & $95.89$ & $93.90$ &  & $99$ & $4$ & $65$ & $107.45$ & $105.47$ \\
+ & $100$ & $7$ & $20$ & $96.89$ & $94.90$ &  & $100$ & $4$ & $66$ & $108.45$ & $106.47$ \\
 \midrule
-\multirow{4}{*}{\shortstack{\textbf{Type II} \\$\mathrm{GF}(256)$\\$m=2n$}} & $36$ & $67.47$ & $65.01$ & \multirow{4}{*}{\shortstack{\textbf{Type V} \\$\mathrm{GF}(256)$\\$n\approx1.5m$}} & $19$ & $60.37$ & $60.57$ \\
- & $37$ & $68.05$ & $65.53$ &  & $20$ & $60.37$ & $60.57$ \\
- & $53$ & $87.15$ & $84.04$ &  & $34$ & $88.93$ & $87.61$ \\
- & $54$ & $87.64$ & $84.51$ &  & $35$ & $88.93$ & $87.61$ \\
+\multirow{6}{*}{\shortstack{\textbf{Type II} \\$\mathrm{GF}(256)$\\$m=2n$}} & \multicolumn{5}{c}{\emph{largest broken challenges}} & \multirow{6}{*}{\shortstack{\textbf{Type V} \\$\mathrm{GF}(256)$\\$n\approx1.5m$}} & \multicolumn{5}{c}{\emph{largest broken challenges}} \\
+ & $36$ & $7$ & $0$ & $67.47$ & $65.01$ &  & $19$ & $10$ & $2$ & $77.58$ & $76.75$ \\
+ & $37$ & $7$ & $0$ & $68.05$ & $65.53$ &  & $20$ & $11$ & $2$ & $81.81$ & $80.84$ \\
+ & \multicolumn{5}{c}{\emph{largest provided challenges}} &  & \multicolumn{5}{c}{\emph{largest provided challenges}} \\
+ & $53$ & $9$ & $0$ & $87.15$ & $84.04$ &  & $34$ & $15$ & $3$ & $118.97$ & $116.80$ \\
+ & $54$ & $9$ & $0$ & $87.64$ & $84.51$ &  & $35$ & $18$ & $2$ & $122.68$ & $120.39$ \\
 \midrule
-\multirow{4}{*}{\shortstack{\textbf{Type III}\\$\mathrm{GF}(31)$\\$m=2n$}} & $37$ & $68.88$ & $66.51$ & \multirow{4}{*}{\shortstack{\textbf{Type VI}\\$\mathrm{GF}(31)$\\$n\approx1.5m$}} & $23$ & $60.88$ & $59.56$ \\
- & $38$ & $69.44$ & $67.06$ &  & $24$ & $65.08$ & $63.65$ \\
- & $52$ & $87.47$ & $84.98$ &  & $35$ & $83.66$ & $81.73$ \\
- & $53$ & $87.97$ & $85.48$ &  & $36$ & $87.90$ & $85.92$ \\
+\multirow{6}{*}{\shortstack{\textbf{Type III}\\$\mathrm{GF}(31)$\\$m=2n$}} & \multicolumn{5}{c}{\emph{largest broken challenges}} & \multirow{6}{*}{\shortstack{\textbf{Type VI}\\$\mathrm{GF}(31)$\\$n\approx1.5m$}} & \multicolumn{5}{c}{\emph{largest broken challenges}} \\
+ & $37$ & $7$ & $0$ & $68.88$ & $66.51$ &  & $23$ & $10$ & $3$ & $81.36$ & $79.48$ \\
+ & $38$ & $7$ & $0$ & $69.44$ & $67.06$ &  & $24$ & $8$ & $5$ & $83.62$ & $81.79$ \\
+ & \multicolumn{5}{c}{\emph{largest provided challenges}} &  & \multicolumn{5}{c}{\emph{largest provided challenges}} \\
+ & $52$ & $9$ & $0$ & $87.47$ & $84.98$ &  & $34$ & $12$ & $5$ & $108.35$ & $106.14$ \\
+ & $53$ & $9$ & $0$ & $87.97$ & $85.48$ &  & $35$ & $14$ & $4$ & $112.38$ & $110.12$ \\
 \bottomrule
 \end{tabular}
