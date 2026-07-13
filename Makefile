@@ -152,11 +152,12 @@ $(ART)/data/get_D-%.txt: $(DATA)/get_D-%.txt | $(ART)/data
 # Paper tables
 # --------------------------------------------------------------------
 
-$(ART)/tables/fukuoka_table.tex: scripts/fukuoka_table.py sage/get_D.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
-	$(PYTHON) scripts/fukuoka_table.py \
-		--get-d sage/get_D.sage \
-		--xl-test "$(SAGE) sage/xl_cost_compare.sage --exe $(XLTEST)" \
-		> $@
+$(ART)/tables/fukuoka_table.tex: sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
+	$(SAGE) sage/generate_guessing_table.sage \
+		--compare-file sage/xl_cost_compare.sage \
+		--exe $(XLTEST) \
+		--guessing-output none \
+		--fukuoka-output $@
 
 $(ART)/tables/security_levels.tex: scripts/security_levels_csv.py $(PRED_CSV) $(GET_D_FILES) | $(ART)/tables
 	$(PYTHON) scripts/security_levels_csv.py \
@@ -170,7 +171,7 @@ $(ART)/tables/guessing_table.tex: sage/generate_guessing_table.sage sage/xl_cost
 	$(SAGE) sage/generate_guessing_table.sage \
 		--compare-file sage/xl_cost_compare.sage \
 		--exe $(XLTEST) \
-		--output $@
+		--guessing-output $@
 
 tables: $(TABLE_FILES) $(PAPER_DATA_FILES)
 
