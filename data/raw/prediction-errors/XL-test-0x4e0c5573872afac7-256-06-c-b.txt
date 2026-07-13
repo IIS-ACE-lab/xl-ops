@@ -64,6 +64,6 @@ field mul: 32122 (pred 32122)
 field inv: 1 (pred 1)
 field mixed mul: 3481098 (pred 3478530)
 
-bit ops: 171388560 (pred 170350916)
+bit ops: 171388560 (pred 171412279)
 BM bit ops: 4608160 (pred 4608160)
-LA bit ops: 166698840 (pred 165661196)
+LA bit ops: 166698840 (pred 166722559)
