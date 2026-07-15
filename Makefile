@@ -159,14 +159,6 @@ $(ART)/tables/fukuoka_table.tex: sage/generate_guessing_table.sage sage/xl_cost_
 		--guessing-output none \
 		--fukuoka-output $@
 
-$(ART)/tables/security_levels.tex: scripts/security_levels_csv.py $(PRED_CSV) $(GET_D_FILES) | $(ART)/tables
-	$(PYTHON) scripts/security_levels_csv.py \
-		--csv $(PRED_CSV) \
-		--get-d-dir $(DATA) \
-		--latex \
-		--show-cost \
-		> $@
-
 $(ART)/tables/guessing_table.tex: sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
 	$(SAGE) sage/generate_guessing_table.sage \
 		--compare-file sage/xl_cost_compare.sage \
