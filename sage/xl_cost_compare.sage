@@ -1523,6 +1523,109 @@ def print_wrapper_prediction(run: XLRun, pred: Prediction, const: bool, bucket: 
     print_count("LA bit ops", run.measured_la_bit_ops, la_pred_bit_ops)
 
 
+def log2_numeric(x):
+    """
+    Return log2(x) as a Python float for display only.
+    Keep prediction arithmetic exact elsewhere.
+    """
+    try:
+        return float(log(RR(x), 2))
+    except Exception:
+        import math
+        return math.log2(float(x))
+
+
+def fmt_int_exact(x):
+    try:
+        return str(ZZ(x))
+    except Exception:
+        return str(int(x))
+
+
+def fmt_log2(x, digits=2):
+    return f"{log2_numeric(x):.{digits}f}"
+
+
+def prediction_variant_name(const=False, bucket=False):
+    if const and bucket:
+        return "const+bucket"
+    if const:
+        return "const"
+    return "baseline"
+
+def pred_get(pred, key, default=None):
+    if isinstance(pred, dict):
+        return pred.get(key, default)
+    return getattr(pred, key, default)
+
+def print_pretty_prediction(run, pred, const=False, bucket=False):
+    variant = prediction_variant_name(const=const, bucket=bucket)
+
+    q_val = getattr(run, "q", None)
+    n_val = getattr(run, "n", None)
+    m_val = getattr(run, "m", None)
+    D_val = getattr(run, "D", None)
+
+    print()
+    print("Prediction summary")
+    print("==================")
+    print(f"field:        GF({q_val})")
+    print(f"parameters:   n={n_val}, m={m_val}, D={D_val}")
+    print(f"variant:      {variant}")
+
+    for attr, label in [
+        ("R", "R"),
+        ("Z", "Z"),
+        ("R_q", "R"),
+        ("Z_q", "Z"),
+    ]:
+        value = getattr(run, attr, None)
+        if value is not None:
+            print(f"{label + ':':12s} {fmt_int_exact(value)}")
+
+    print()
+    print("Field-operation counts")
+    print("----------------------")
+
+    for key, label in [
+        ("A", "add"),
+        ("S", "sub"),
+        ("M", "mul"),
+        ("M_fixed", "mul const"),
+        ("I", "inv"),
+    ]:
+        value = pred_get(pred, key)
+        if value is not None:
+            print(f"{label:12s} {fmt_int_exact(value)}")
+
+    print()
+    print("Bit-operation prediction")
+    print("------------------------")
+
+    bm_counts, bm_pred_bit_ops = predicted_bm_counts_and_bits(run)
+    la_counts, la_pred_bit_ops = predicted_la_counts_and_bits(
+        run,
+        const=const,
+        bucket=bucket,
+    )
+
+#    for key, label in [
+#        ("la_pred_bit_ops", "linear algebra"),
+#        ("bm_pred_bit_ops", "Berlekamp-Massey"),
+#        ("bit_ops_total", "total"),
+#    ]:
+#        value = pred_get(pred, key)
+
+    for label, value in [("total", pred_get(pred, "bit_ops_total")), ("linear algebra", la_pred_bit_ops), ("Berlekamp-Massey", bm_pred_bit_ops)]:
+        if value is not None:
+            print(
+                f"{label:18s} "
+                f"{fmt_int_exact(value):>24s} "
+                f"(log2 = {fmt_log2(value)})"
+            )
+
+    print()
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -1572,11 +1675,19 @@ def main() -> None:
             "measured values set to 0."
         ),
     )
+    ap.add_argument(
+        "--pretty",
+        action="store_true",
+        help="With --pred, print a human-readable prediction summary including log2 values.",
+    )
 
     args = ap.parse_args()
 
     if args.wrapper and args.pred:
         raise SystemExit("Use only one of --wrapper and --pred.")
+
+    if args.pretty and not args.pred:
+        ap.error("--pretty is only supported together with --pred")
 
     if args.pred and args.use_macaulay_runtime_data:
         raise SystemExit(
@@ -1597,6 +1708,16 @@ def main() -> None:
         )
     
         pred = attach_bit_cost_prediction(pred, run, const=args.const, bucket=args.bucket)
+
+        if args.pretty:
+            print_pretty_prediction(
+                run,
+                pred,
+                const=args.const,
+                bucket=args.bucket,
+            )
+            return
+
 
         print(raw_f_cost, end="" if raw_f_cost.endswith("\n") else "\n")
     
