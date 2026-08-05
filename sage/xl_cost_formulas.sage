@@ -332,7 +332,7 @@ def model_R_Z_numeric(qq, nn, mm, dd):
             f"Z remaining variables: {Z_vars}"
         )
 
-    return RR(R_val), RR(Z_val)
+    return QQ(R_val), QQ(Z_val)
 
 
 # --------------------------------------------------------------------
