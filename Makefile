@@ -34,8 +34,8 @@ SPLIT_PRED_DIR := $(ART)/figures/data
 
 TABLE_FILES := \
 	$(ART)/tables/fukuoka_table.tex \
-	$(ART)/tables/security_levels.tex \
-	$(ART)/tables/guessing_table.tex
+	$(ART)/tables/guessing_table.tex \
+	$(ART)/tables/op-costs.tex
 
 FORMULA_FILES := \
 	$(ART)/formulas/table-I.tex \
@@ -44,8 +44,7 @@ FORMULA_FILES := \
 	$(ART)/formulas/op-formulas-const.tex \
 	$(ART)/formulas/op-formulas-const-bucket.tex \
 	$(ART)/formulas/bm-extra.tex \
-	$(ART)/formulas/all-bit-ops.tex \
-	$(ART)/formulas/op-costs.tex
+	$(ART)/formulas/all-bit-ops.tex
 
 FIGURE_FILES := \
 	$(ART)/figures/quotient_convergence_grid.tex
@@ -122,7 +121,7 @@ $(PRED_CSV): $(XLTEST) sage/xl_predict_range.sage sage/xl_cost_compare.sage sage
 		--output $@
 
 # --------------------------------------------------------------------
-# get_D lookup files required by security_levels_csv.py
+# get_D lookup files
 # --------------------------------------------------------------------
 
 $(DATA)/get_D-%.txt: sage/get_D.sage | $(DATA)
@@ -164,6 +163,13 @@ $(ART)/tables/guessing_table.tex: sage/generate_guessing_table.sage sage/xl_cost
 		--compare-file sage/xl_cost_compare.sage \
 		--exe $(XLTEST) \
 		--guessing-output $@
+
+$(ART)/tables/op-costs.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
+	$(SAGE) sage/xl_latex_formulas.sage \
+		--op-cost \
+		--xl-test $(XLTEST) \
+		> $@
+
 
 tables: $(TABLE_FILES) $(PAPER_DATA_FILES)
 
@@ -227,12 +233,6 @@ $(ART)/formulas/bm-extra.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.
 $(ART)/formulas/all-bit-ops.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/formulas
 	$(SAGE) sage/xl_latex_formulas.sage \
 		--bit-costs --xl-test $(XLTEST) --style sage --inline-extra-BM \
-		> $@
-
-$(ART)/formulas/op-costs.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
-		--op-cost \
-		--xl-test $(XLTEST) \
 		> $@
 
 formulas: $(FORMULA_FILES)
