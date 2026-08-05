@@ -23,18 +23,13 @@ class GF2const : public Field<GF2const>
 
     GF2const(const int32_t v)
     {
-        this->v = v;// & 1;
+        this->v = v;
     }
 
     static GF2const random_element()
     {
        return GF2const(random_int(1));
     }
-
-//    operator int() const {
-//       return this->v % 2;
-//    }
-
 
   protected:
 

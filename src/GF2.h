@@ -15,13 +15,11 @@ class GF2 : public Field<GF2>
     inline static const int q = 2;
     inline static const int ceil_log2_q = 1;
 
-    //base_field<2>()
     GF2()
     {
         this->v = 0;
     }
 
-    //base_field<2>(const bit &v)
     GF2(const bit &v)
     {
         this->v = bit(v.value());
@@ -32,14 +30,11 @@ class GF2 : public Field<GF2>
         this->v = bit(v.at(0).value());
     }
 
-
-    //base_field<2>(const int v)
     GF2(const int v)
     {
         this->v = bit(v);
     }
 
-    //base_field<2>(const bigint v)
     GF2(const bigint v)
     {
         this->v = bit(v);
@@ -55,11 +50,6 @@ class GF2 : public Field<GF2>
        vector<bit> ret = {bit(this->v)};
        return ret;
     }
-
-//    operator int() const {
-//       return this->v.value();
-//    }
-
 
   protected:
 
@@ -91,11 +81,6 @@ class GF2 : public Field<GF2>
     {
        return bit(this->v);
     }
-
-    //bit operator==(const GF2 &c) const
-    //{
-    //   return bit(this->v.at(0).value() == c.v.at(0).value());
-    //}
 
     friend ostream& operator<<(ostream& os, const GF2& v);
 };

@@ -10,7 +10,6 @@ bit bit_sum_carry(bit a, bit b, bit carry);
 bit get_carry(bit a, bit b, bit carry_in);
 vector<bit> gf31_add(const vector<bit> &a, const vector<bit> &b);
 vector<bit> gf31_dbl(const vector<bit> &a);
-//vector<bit> gf31_not(const vector<bit> &a);
 vector<bit> gf31_sub(const vector<bit> &a, const vector<bit> &b);
 vector<bit> gf31_mul(const vector<bit> &a, const vector<bit> &b);
 vector<bit> gf31_muladd(const vector<bit> &a, const vector<bit> &b);
@@ -44,16 +43,6 @@ class GF31 : public Field<GF31> {
        return ret;
     }
 
-//    operator int() const {
-//       int val = 0;
-//
-//       for (int i = this->v.size() - 1; i >= 0; i--)
-//          val = (val << 1) | this->v.at(i).value();
-//
-//       return val;
-//    }
-
-
   protected:    
     GF31 _add(const GF31 &c) const {
         return GF31(gf31_add(this->v, c.v));
@@ -71,8 +60,6 @@ class GF31 : public Field<GF31> {
         return GF31(gf31_mul(this->v, c.v));
     }
 
-    //inline static const uint8_t __inv[31] = {0, 1, 16, 21, 8, 25, 26, 9, 4, 7, 28, 17, 13, 12, 20, 29, 2, 11, 19, 18, 14, 3, 24, 27, 22, 5, 6, 23, 10, 15, 30};
-
     GF31 _inv() const {
         // Adder chain from https://wwwhomes.uni-bielefeld.de/achim/addition_chain.html
         GF31  v2 = (*this) * (*this);    // 1( 0)            2
@@ -84,8 +71,6 @@ class GF31 : public Field<GF31> {
         GF31 v29 = v28 * (*this);        // 7( 6, 0)        29
 
         return v29;
-
-//        return GF31(__inv[index_value(this->v)]);
     }
 
     bit _not_zero() const {
@@ -96,16 +81,6 @@ class GF31 : public Field<GF31> {
 
         return cond;
     }
-
-    // bit not_zero()
-    //{
-    //    return bit(this->v == 0 ? 0 : 1); //go with all the bits
-    // }
-
-    // bit operator==(const GF31 &c) const
-    //{
-    //    return bit(this->v.at(0).value() == c.v.at(0).value());
-    // }
 
     friend ostream &operator<<(ostream &os, const GF31 &v);
 };
@@ -143,15 +118,6 @@ ostream &operator<<(ostream &os, const GF31 &v) {
 
     return os;
 }
-
-/*
-ostream& operator<<(ostream& os, const GF31& v)
-{
-   os << int(v.v); //for printing out it needs integer try to change the vector to integer at your code
-
-   return os;
-}
-*/
 
 void mux(int32_t &a, int32_t &b, bit &c) {
     a = c.value() ? b : a;

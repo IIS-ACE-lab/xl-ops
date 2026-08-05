@@ -8,7 +8,6 @@
 
 #include <cassert>
 
-//reduction
 vector<bit> gf31_reduction(vector<bit> res_in)
 {
     vector<bit> abit = bit_vector_from_integer(0, 5);
@@ -39,7 +38,6 @@ vector<bit> gf31_reduction(vector<bit> res_in)
     return res;
 }
 
-//addition for GF(31)
 vector<bit> gf31_add(const vector<bit> &a, const vector<bit> &b)
 {
     assert(a.size() == b.size());
@@ -83,8 +81,6 @@ vector<bit> gf31_dbl(const vector<bit>& a)
     return res;
 }
 
-
-//addition of integers
 vector<bit> int_add(const vector<bit> &a, const vector<bit> &b)
 {
    assert(a.size() == b.size());
@@ -106,7 +102,6 @@ static inline void full_adder_no_carry(bit &s, bit &c, bit a, bit b)
         s = t ^ c;
 }
 
-//negative of an integer
 vector<bit> int_neg(const vector<bit> &a)
 {
     vector<bit> neg = bit_vector_from_integer(0, a.size()+1);
@@ -130,7 +125,6 @@ vector<bit> int_neg(const vector<bit> &a)
     return neg;
 }
 
-//addition of integers discarding carry
 vector<bit> int_add_trunc(const vector<bit> &a, const vector<bit> &b)
 {
    assert(a.size() == b.size());
@@ -148,8 +142,6 @@ vector<bit> int_add_trunc(const vector<bit> &a, const vector<bit> &b)
    return sum;
 }
 
-
-//substruction for GF(31)
 vector<bit> gf31_sub(const vector<bit> &a, const vector<bit> &b)
 {
    assert((a.size() == 5) && (b.size() == 5));
@@ -163,7 +155,6 @@ vector<bit> gf31_sub(const vector<bit> &a, const vector<bit> &b)
    return gf31_add(a, b_neg);
 }
 
-//multiplication reduce at the end for GF(31)
 vector<bit> gf31_mul(const vector<bit> &a, const vector<bit> &b)
 {
     assert(a.size() == b.size());
@@ -197,7 +188,6 @@ vector<bit> gf31_mul(const vector<bit> &a, const vector<bit> &b)
     return res;
 }
 
-//multiplication add and reduce for GF(31)
 vector<bit> gf31_muladd(const vector<bit> &a, const vector<bit> &b)
 {
     assert(a.size() == b.size());

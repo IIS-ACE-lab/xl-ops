@@ -49,32 +49,6 @@ inline static std::array<mul_func,31> mul_funcs = {{
 }};
 
 
-// direct counting of gf31 additions in each chain
-inline static std::array<int,31> mul_funcs_add_counts = []() {
-    std::array<int,31> counts{};
-    GF31 probe(1);
-    for (int i = 0; i < 31; i++) {
-        GF31::clear_all();
-        (void)mul_funcs[i](probe);
-        counts[i] = int(GF31::ops(field_ops_add));
-    }
-    GF31::clear_all();
-    return counts;
-}();
-
-// direct counting of gf31 doublings in each chain
-inline static std::array<int,31> mul_funcs_dbl_counts = []() {
-    std::array<int,31> counts{};
-    GF31 probe(1);
-    for (int i = 0; i < 31; i++) {
-        GF31::clear_all();
-        (void)mul_funcs[i](probe);
-        counts[i] = int(GF31::ops(field_ops_dbl));
-    }
-    GF31::clear_all();
-    return counts;
-}();
-
 // Convert bit vector to integer index
 inline static int bit_vector_to_int(const std::vector<bit>& v)
 {
@@ -86,12 +60,6 @@ inline static int bit_vector_to_int(const std::vector<bit>& v)
     }
     return result;
 }
-
-// inline GF31 GF31_mult(const GF31& a, const GF31& b)
-// {
-//     int idx = bit_vector_to_int(b.v);
-//     return mul_funcs[idx](a);
-// }
 
 class GF31const : public Field<GF31const>
 {
@@ -125,11 +93,6 @@ class GF31const : public Field<GF31const>
        return GF31const(random_val(31));
     }
 
-//    operator int() const {
-//       return this->v % 31;;
-//    }
-
-
   protected:
 
     GF31const _add(const GF31const &c) const override
@@ -152,7 +115,9 @@ class GF31const : public Field<GF31const>
        return GF31const(this->v * c.v);
     }
 
-    inline static const uint8_t __inv[31] = {0, 1, 16, 21, 8, 25, 26, 9, 4, 7, 28, 17, 13, 12, 20, 29, 2, 11, 19, 18, 14, 3, 24, 27, 22, 5, 6, 23, 10, 15, 30};
+    inline static const uint8_t __inv[31] = {0, 1, 16, 21, 8, 25, 26, 9, 4, 7,
+       28, 17, 13, 12, 20, 29, 2, 11, 19, 18, 14, 3, 24, 27, 22, 5, 6, 23, 10,
+       15, 30};
 
     GF31const _inv() const override
     {
@@ -166,8 +131,8 @@ class GF31const : public Field<GF31const>
 
   public:
 
-    explicit operator GF31() const {          // implicit conversion
-        return GF31(v);              // adapt to however GF31 is constructed
+    explicit operator GF31() const {
+        return GF31(v);
     }
 
     using Field<GF31const>::operator-;
@@ -197,11 +162,5 @@ ostream& operator<<(ostream& os, const GF31const& v)
 inline GF31 operator*(const GF31& a, const GF31const& b) {
    return b * a;
 }
-
-// inline GF31 GF31_mult(const GF31& a, const GF31const& b)
-// {
-//     return mul_funcs[b.v](a);
-// }
-
 
 #endif // GF31_CONST_H

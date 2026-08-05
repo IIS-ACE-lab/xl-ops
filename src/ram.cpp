@@ -1,11 +1,16 @@
+/*
+   This file is part of the CryptAttackTester by Daniel J. Bernstein and Tung Chou.
+
+   Original source:
+     https://cat.cr.yp.to/cryptattacktester-20231020.tar.gz
+
+*/
+
 #include <cassert>
 #include "ram.h"
 #include "bit_vector.h"
 
 using namespace std;
-
-
-
 
 // input: vector x of equal-length bit vectors x[0],...,x[N-1]
 // input: integer L between 0 and N-1

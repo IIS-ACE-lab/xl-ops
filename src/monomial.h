@@ -1,3 +1,11 @@
+/*
+   This file is modified from the XL code by Ruben Niederhagen and Tung Chou.
+
+   Original source:
+     http://polycephaly.org/projects/xl/data/xl-20260804.tgz
+
+*/
+
 #ifndef TMATRIX_H
 #define TMATRIX_H
 
@@ -6,15 +14,6 @@
 #include <string.h>
 
 #include <vector>
-
-using namespace std;
-
-#define ECHO_NL() \
-   { printf("\n"); fflush(stdout); }
-#define ECHO(...) \
-   { printf(__VA_ARGS__); fflush(stdout); }
-#define ECHO_R(...) \
-   { printf(__VA_ARGS__); fflush(stdout); }
 
 unsigned int binomial(int m, int n)
 {
@@ -26,17 +25,6 @@ unsigned int binomial(int m, int n)
       ret = ret*(i + m - n)/i;
    return ret;
 }
-
-unsigned int sum_binomial(int n, int d)
-{
-   uint64_t ret = 0;
-
-   for (int i = 0; i <= d; i++)
-      ret += binomial(n, i);
-
-   return ret;
-}
-
 
 class monomial
 {
@@ -50,10 +38,10 @@ class monomial
 
    public:
 
-      monomial (int q, unsigned n, bool GF2_opt)
+      monomial (int q, unsigned n)
       {
          this->q = q;
-         this->GF2_opt = (q == 2) && GF2_opt;
+         this->GF2_opt = (q == 2);
          this->mon = vector<unsigned>(n, 0);
       }
 
@@ -185,7 +173,7 @@ class monomial
       {
          if (this->GF2_opt)
          {
-            monomial ret(this->q, this->mon.size(), this->GF2_opt);
+            monomial ret(this->q, this->mon.size());
 
             for (unsigned k = 0; k < this->mon.size(); k++)
                ret[k] = this->mon[k] | x.mon[k];
@@ -195,7 +183,7 @@ class monomial
          else
          {
 
-            monomial ret(this->q, this->mon.size(), this->GF2_opt);
+            monomial ret(this->q, this->mon.size());
 
             for (unsigned k = 0; k < this->mon.size(); k++)
                ret[k] = this->mon[k] + x.mon[k];

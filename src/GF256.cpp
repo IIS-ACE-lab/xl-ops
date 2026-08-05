@@ -16,8 +16,6 @@ vector<bit> shortvec(const vector<bit> &a)
     return res;
 }
 
-
-//addition operation for GF(256)
 vector<bit> gf256_add(const vector<bit> &a, const vector<bit> &b)
 {
     vector<bit> add = bit_vector_xor(a,b);
@@ -41,7 +39,7 @@ vector<bit> gf256_dbl(const vector<bit>& a)
 }
 
 
-//fastest multiplication for gf256 with bernstain's order
+// fast multiplication for gf256 using Bernstein's code (https://binary.cr.yp.to/bbe251/8.gz)
 vector<bit> gf256_mul_bs(const vector<bit> &a, const vector<bit> &b)
 {
     vector<bit> res = bit_vector_from_integer(0, 16);
@@ -182,8 +180,6 @@ vector<bit> gf256_mul_bs_red(const vector<bit> &a, const vector<bit> &b)
     return endres;
 }
 
-
-//squaring operation for gf256 to use in inverse
 vector<bit> gf256_sqr(const vector<bit> &a)
 {
     vector<bit> res = bit_vector_from_integer(0, 16);
@@ -203,28 +199,26 @@ vector<bit> gf256_sqr(const vector<bit> &a)
     }
 
     endres = shortvec(res);
-    //TRACE(cout << "sqr: ");
-    //TRACE(printGF(endres));
+
     return endres;
 }
 
 //inverse on gf256 with the shortest addition chain 
 vector<bit> gf256_inverse(const vector<bit> &a)
 {
-    vector<bit> x0 = a; // gf256_sqr(a);
-    vector<bit> x1 = gf256_sqr(x0);  // 2
-    vector<bit> x2 = gf256_mul_bs_red(x1,x0);  // 3
-    vector<bit> x3 = gf256_sqr(x2);  // 6
-    vector<bit> x4 = gf256_sqr(x3);  // 12
-    vector<bit> x5 = gf256_mul_bs_red(x4,x2);  // 15
-    vector<bit> x6 = gf256_sqr(x5);  // 30
-    vector<bit> x7 = gf256_sqr(x6);  // 60 
-    vector<bit> x8 = gf256_mul_bs_red(x7,x2);  // 63
-    vector<bit> x9 = gf256_sqr(x8);  // 126
+    vector<bit> x0 = a;
+    vector<bit> x1 = gf256_sqr(x0);              // 2
+    vector<bit> x2 = gf256_mul_bs_red(x1,x0);    // 3
+    vector<bit> x3 = gf256_sqr(x2);              // 6
+    vector<bit> x4 = gf256_sqr(x3);              // 12
+    vector<bit> x5 = gf256_mul_bs_red(x4,x2);    // 15
+    vector<bit> x6 = gf256_sqr(x5);              // 30
+    vector<bit> x7 = gf256_sqr(x6);              // 60 
+    vector<bit> x8 = gf256_mul_bs_red(x7,x2);    // 63
+    vector<bit> x9 = gf256_sqr(x8);              // 126
     vector<bit> x10 = gf256_mul_bs_red(x9, x0);  // 127
-    vector<bit> res = gf256_sqr(x10);  // 254
+    vector<bit> res = gf256_sqr(x10);            // 254
 
     return res;
 }
-
 

@@ -27,8 +27,6 @@
 using namespace std;
 
 
-extern bool GF2_opt;
-extern bool run_XL;
 extern bool trace;
 extern bool bucket;
 extern uint64_t perm_seed;
@@ -54,22 +52,21 @@ ostream& operator<<(ostream& os, const vector<GF>& v)
 }
 
 
-//building macaulay matrix 
 template <typename GF, typename GFsys>
 int macaulay_matrix(
     vector<vector<GFsys>> &coeff_list, vector<vector<int>> &idx_list, // A 
     vector<GF> &b, // Ax = b
     const vector<vector<GFsys>> &p, int n, int m, int d)
 {
-    //m: number of polynomials
-    //n: number of variables 
-    //p: list of polynomials
-    //d: degree
+    // p: list of polynomials
+    // m: number of polynomials
+    // n: number of variables 
+    // d: degree
 
-    int num_colms = 0; //extended matrix's column numbers
+    int num_colms = 0;      //extended matrix's column numbers
     int num_row_blocks = 0; //number of polynomial blocks
 
-    if (GF2_opt)
+    if constexpr (std::is_same_v<GF, GF2>)  // GF2 optimization
     {
        for (int dd = 0; dd <= d; dd++)
           num_colms += binomial(n, dd);
@@ -79,22 +76,22 @@ int macaulay_matrix(
     }
     else
     {
-       num_colms = binomial(n+d, d); //extended matrix's column numbers
-       num_row_blocks = binomial(n+d-2, d-2); //number of polynomial blocks
+       num_colms = binomial(n+d, d);
+       num_row_blocks = binomial(n+d-2, d-2);
     }
 
     cout << "n " << n << "  d " << d << "  ncols " << num_colms << "  nrows " << (num_row_blocks*m) << "\n";
 
-    monomial ext_mon(GF::q, n, GF2_opt);
+    monomial ext_mon(GF::q, n);
 
     for (int i = 0; i < num_row_blocks; i++) //each monomial of the monomial list
     {
         for (int j = 0; j < m; j++) //each row of the system
         {
             vector<GFsys> coeff; //vector includes the coeff of the polynomial
-            vector<int> idx; //index of the coeff of the polynomial
+            vector<int> idx;     //index of the coeff of the polynomial
 
-            monomial sys_mon(GF::q, n, GF2_opt);
+            monomial sys_mon(GF::q, n);
 
             for (int t = 0; t < p.at(j).size(); t++) //each coef of the each row
             {
@@ -104,7 +101,7 @@ int macaulay_matrix(
                 {
                    int l = idx.size();
 
-                   if (GF2_opt)
+                   if constexpr (std::is_same_v<GF, GF2>)  // GF2 optimization
                    {
                       for (l = 0; l < idx.size(); l++)
                          if (idx[l] == prod_mon.monomial_to_index()-1)
@@ -137,22 +134,7 @@ int macaulay_matrix(
     for (int i = 0; i < p.size(); i++)
         b.at(i) = static_cast<GF>(p.at(i).at(0));
 
-    cout << "num_cols: " << num_colms << "\n";
-
-
-    {
-       map<int,int> s;
-
-       for (int i=0; i < coeff_list.size(); i++)
-          s[coeff_list.at(i).size()]++;
-
-       cout << "entries per row (before drop):\n";
-
-       for (auto [key, count] : s) {
-          cout << key << ": " << count << "\n";
-       }
-       cout << "\n";
-    }
+    cout << "num_cols: " << num_colms << "\n\n";
 
     uint64_t new_seed = random_val(0xffffffffffffffff);
 
@@ -174,25 +156,9 @@ int macaulay_matrix(
 
     random_init(new_seed);
 
-    {
-       map<int,int> s;
-
-       for (int i=0; i < coeff_list.size(); i++)
-          s[coeff_list.at(i).size()]++;
-
-       cout << "entries per row (after drop):\n";
-
-       for (auto [key, count] : s) {
-          cout << key << ": " << count << "\n";
-       }
-       cout << "\n";
-    }
-
     return 0;
 }
 
-
-// Run the Berlekamp-Massey algorithm
 template <typename GF>
 vector<GF> bm(const vector<GF> &s)
 {
@@ -294,18 +260,6 @@ vector<GF> bm(const vector<GF> &s)
         sigma = psi;
     }
 
-//    vector<GF> ret;
-//
-//    // Handle variable lenght output with bit ops?
-//    for (int i = 0; i <= t; i++)
-//       ret.insert(ret.begin(), sigma.at(i));
-//
-//    while (ret.at(0).not_zero().value() == 0)
-//    {
-//       ret.erase(ret.begin());
-//       ret.push_back(GF(0));
-//    }
-
     bm_ops += bit::ops();
 
     return sigma;
@@ -320,7 +274,6 @@ vector<GF> wiedemann(vector<vector<GFsys>> &coeff_list, vector<vector<int>> &idx
     int num_rows = coeff_list.size();
     TRACE(cout << __LINE__ << '\n');
 
-    // Generate the sequence of matrix-vector products
     vector<GF> sequence = {b.at(n-1)};
 
     vector<vector<GF>> X;
@@ -350,12 +303,11 @@ vector<GF> wiedemann(vector<vector<GFsys>> &coeff_list, vector<vector<int>> &idx
     cout << "\n";
 
 
-////////////////// stat begin
+////////////////// print stat begin
    if constexpr (std::is_same_v<GFsys, GF31const> or std::is_same_v<GFsys, GF256const> or std::is_same_v<GFsys, GF2const>)
    {
         uint64_t not_zero = 0;
         uint64_t struct_not_zero = 0;
-//        uint64_t larger_one = 0;
 
         for (int row = 0; row < coeff_list.size(); row++)
         {
@@ -372,9 +324,6 @@ vector<GF> wiedemann(vector<vector<GFsys>> &coeff_list, vector<vector<int>> &idx
                   not_zero += 1;
 
                struct_not_zero += 1;
-
-//               if (coeff.at(i).v > 1)
-//                  larger_one += 1;
             }
         }
 
@@ -382,7 +331,6 @@ vector<GF> wiedemann(vector<vector<GFsys>> &coeff_list, vector<vector<int>> &idx
        cout << "Macaulay mul bit ops: " << bit::ops() << "\n";
        cout << "Macaulay not zero: " << not_zero << "\n";
        cout << "Macaulay structural not zero: " << struct_not_zero << "\n";
-//       cout << "Macaulay larger one: " << larger_one << "\n";
        cout << "\n";
 
        cout << "Macaulay mul field add: " << GF::ops(field_ops_add) << "\n";
@@ -397,9 +345,6 @@ vector<GF> wiedemann(vector<vector<GFsys>> &coeff_list, vector<vector<int>> &idx
        GFsys::clear_all();
    }
 ////////////////// stat end
-
-//       cout << "entries per row: " << coeff_list.at(i).size() << "\n";
-//    cout << "entries per row: " << coeff_list.at(coeff_list.size()-1).size() << "\n";
 
     while (sequence.size() < 2*num_rows)
     {
@@ -516,173 +461,126 @@ int XL(int n, int m, int d)
 
     cout << "sol: " << sol << "\n";
 
-    vector<vector<GFsys>> sys; //list of each polynomial's coefficient
+    vector<vector<GFsys>> sys;        //list of each polynomial's coefficient
 
     vector<vector<GFsys>> coeff_list; //list of each polynomial's coefficient
-    vector<vector<int>> idx_list;  //list of index, where the coefficient on the matrix exactly
+    vector<vector<int>> idx_list;     //list of index, where the coefficient on the matrix exactly
 
-    if (run_XL)
+    for (int i = 0; i < m; i++)
     {
-       for (int i = 0; i < m; i++)
-       {
-          vector<GFsys> poly;
+       vector<GFsys> poly;
 
+       {
+          GFsys v = GFsys::random_element();
+          poly.insert(poly.end(), v);
+       }
+
+       GFsys eval = poly[0];
+
+       for (int j = 0; j < n; j++)
+       {
+          GFsys v = GFsys::random_element();
+          poly.insert(poly.end(), v);
+
+          eval = eval + v*sol.at(n-j-1);
+       }
+
+       int start_k_off;
+
+       if constexpr (std::is_same_v<GF, GF2>)  // GF2 optimization
+          start_k_off = 1;
+       else
+          start_k_off = 0;
+
+       for (int j = 0; j < n; j++)
+          for (int k=j+start_k_off; k < n; k++)
           {
              GFsys v = GFsys::random_element();
              poly.insert(poly.end(), v);
+
+             eval = eval + v*sol.at(n-j-1)*sol.at(n-k-1);
           }
 
-          GFsys eval = poly[0];
+       TRACE(cout << poly << "\n" << eval << "\n");
+       poly[0] = poly[0] - eval;
+       TRACE(cout << poly << "\n" << eval << "\n");
 
-          for (int j = 0; j < n; j++)
-          {
-             GFsys v = GFsys::random_element();
-             poly.insert(poly.end(), v);
-
-             eval = eval + v*sol.at(n-j-1);
-          }
-
-          int start_k_off;
-
-          if (GF2_opt)
-             start_k_off = 1;
-          else
-             start_k_off = 0;
-
-          for (int j = 0; j < n; j++)
-             for (int k=j+start_k_off; k < n; k++)
-             {
-                GFsys v = GFsys::random_element();
-                poly.insert(poly.end(), v);
-
-                eval = eval + v*sol.at(n-j-1)*sol.at(n-k-1);
-             }
-
-          TRACE(cout << poly << "\n" << eval << "\n");
-          poly[0] = poly[0] - eval;
-          TRACE(cout << poly << "\n" << eval << "\n");
-
-          sys.insert(sys.end(), poly);
-       }
-
-       TRACE(cout << "system:\n");
-
-       for (int i = 0; i < sys.size(); i++)
-          TRACE(cout << sys[i]);
-
-       TRACE(cout << "\n");
-
-       std::mt19937 rng(perm_seed);
-
-       shuffle(sys.begin(), sys.end(), rng);
-
-
-//       {
-//          int hist[GFsys::q] = {0};
-//
-//          for (int p=0; p < sys.size(); p++)
-//             for (int c=0; c < sys.at(p).size(); c++)
-//                hist[(int)sys.at(p).at(c)] += 1;
-//
-//          for (int i = 0; i < GFsys::q; i++)
-//             cout << i << ": " << hist[i] << "\n";
-//
-//          cout << "\n";
-//       }
-
-
-       vector<GF> b;
-
-       macaulay_matrix(coeff_list, idx_list, b, sys, n, m, d);
-
-//       {
-//          int hist[GFsys::q] = {0};
-//
-//          for (int row = 0; row < coeff_list.size(); row++)
-//          {
-//             vector<GFsys> coeff = coeff_list.at(row);
-//             for (int i = 0; i < coeff.size(); i++)
-//                hist[(int)coeff.at(i)] += 1;
-//          }
-//
-//          for (int i = 0; i < GFsys::q; i++)
-//             cout << i << ": " << hist[i] << "\n";
-//
-//          cout << "\n";
-//       }
-
-       for (int i = 0; i < coeff_list.size(); i++)
-       {
-          vector<GFsys> vec(coeff_list.size(), GFsys(0));
-
-          int idx = 0;
-
-          for (int j = 0; j < coeff_list.size(); j++)
-             if (j == idx_list[i][idx])
-             {
-                vec[j] = coeff_list[i][idx];
-                idx++;
-
-                if (idx >= idx_list[i].size())
-                   break;
-             }
-
-          TRACE(cout << vec);
-       }
-
-       TRACE(cout << "\n" << b << "\n");
-
-       bit::clear_all();
-       GF::clear_all();
-       GFsys::clear_all();
-
-
-       sol2 = wiedemann<GF, GFsys>(coeff_list, idx_list, b, n);
-
-       cout << "\n";
-       cout << "got: " << sol2 ;
-
-
-
-       cout << "\n";
-       cout << "bit ops: " << bit::ops() << "\n";
-       cout << "bm bit ops: " << bm_ops << "\n";
-       cout << "LA bit ops: " << la_ops << "\n";
-       cout << "\n";
-
-       cout << "GF:\n";
-       cout << "field add: " << GF::ops(field_ops_add) << "\n";
-       cout << "field dbl: " << GF::ops(field_ops_dbl) << "\n";
-       cout << "field sub: " << GF::ops(field_ops_sub) << "\n";
-       cout << "field mul: " << GF::ops(field_ops_mul) << "\n";
-       cout << "field inv: " << GF::ops(field_ops_inv) << "\n";
-       cout << "\n";
-
-//       cout << "GFsys:\n";
-//       cout << "field add: " << GFsys::ops(field_ops_add) << "\n";
-//       cout << "field dbl: " << GFsys::ops(field_ops_dbl) << "\n";
-//       cout << "field sub: " << GFsys::ops(field_ops_sub) << "\n";
-//       cout << "field mul: " << GFsys::ops(field_ops_mul) << "\n";
-//       cout << "field inv: " << GFsys::ops(field_ops_inv) << "\n";
-//       cout << "\n";
-       if constexpr (std::is_same_v<GFsys, GF31const> or std::is_same_v<GFsys, GF256const> or std::is_same_v<GFsys, GF2const>)
-       {
-          cout << "field mixed mul: " << GFsys::nummixedmul << "\n";
-          cout << "\n";
-       }
+       sys.insert(sys.end(), poly);
     }
 
-//    print_field_cost<GF, GFsys>(coeff_list, idx_list, n, m, d);
+    TRACE(cout << "system:\n");
 
-    if (run_XL)
+    for (int i = 0; i < sys.size(); i++)
+       TRACE(cout << sys[i]);
+
+    TRACE(cout << "\n");
+
+    std::mt19937 rng(perm_seed);
+
+    shuffle(sys.begin(), sys.end(), rng);
+
+
+    vector<GF> b;
+
+    macaulay_matrix(coeff_list, idx_list, b, sys, n, m, d);
+
+    for (int i = 0; i < coeff_list.size(); i++)
     {
-       for (int i = 0; i < n; i++)
-          if ((sol[i] - sol2[i]).not_zero().value())
+       vector<GFsys> vec(coeff_list.size(), GFsys(0));
+
+       int idx = 0;
+
+       for (int j = 0; j < coeff_list.size(); j++)
+          if (j == idx_list[i][idx])
           {
-             cout << "ERR\n";
-             break;
+             vec[j] = coeff_list[i][idx];
+             idx++;
+
+             if (idx >= idx_list[i].size())
+                break;
           }
+
+       TRACE(cout << vec);
     }
+
+    TRACE(cout << "\n" << b << "\n");
+
+    bit::clear_all();
+    GF::clear_all();
+    GFsys::clear_all();
+
+
+    sol2 = wiedemann<GF, GFsys>(coeff_list, idx_list, b, n);
+
+    cout << "\n";
+    cout << "got: " << sol2 ;
+
+    cout << "\n";
+    cout << "bit ops: " << bit::ops() << "\n";
+    cout << "bm bit ops: " << bm_ops << "\n";
+    cout << "LA bit ops: " << la_ops << "\n";
+    cout << "\n";
+
+    cout << "GF:\n";
+    cout << "field add: " << GF::ops(field_ops_add) << "\n";
+    cout << "field dbl: " << GF::ops(field_ops_dbl) << "\n";
+    cout << "field sub: " << GF::ops(field_ops_sub) << "\n";
+    cout << "field mul: " << GF::ops(field_ops_mul) << "\n";
+    cout << "field inv: " << GF::ops(field_ops_inv) << "\n";
+    cout << "\n";
+
+    if constexpr (std::is_same_v<GFsys, GF31const> or std::is_same_v<GFsys, GF256const> or std::is_same_v<GFsys, GF2const>)
+    {
+       cout << "field mixed mul: " << GFsys::nummixedmul << "\n";
+       cout << "\n";
+    }
+
+    for (int i = 0; i < n; i++)
+       if ((sol[i] - sol2[i]).not_zero().value())
+       {
+          cout << "ERR\n";
+          break;
+       }
 
     return 0;
 }

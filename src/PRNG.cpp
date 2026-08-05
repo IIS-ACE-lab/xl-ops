@@ -41,9 +41,6 @@ uint64_t random_val(unsigned max)
      shake256_squeeze((unsigned char*)&ret, nbytes, &shake);
 
      ret = ret & ((1 << nbits) - 1);
-
-     //cout << max << " " << nbits << " " << ret << "\n";
-     //cout << nbits << " " << ret << "\n";
    }
 
    return ret;

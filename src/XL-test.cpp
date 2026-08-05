@@ -12,18 +12,15 @@
 #include "GF256.h"
 #include "GF256-const.h"
 #include "GF31.h"
-#include "GF31-fop.h"
 #include "GF31-const.h"
 
 using namespace std;
 
 
-bool GF2_opt = false;
 bool trace = false;
 bool fcost = false;
 bool bucket = false;
 bool const_cost_average = true;
-bool run_XL = true;
 uint64_t perm_seed = 0;
 
 bigint bm_ops;
@@ -100,15 +97,10 @@ void print_help(const char* program_name) {
               << "                            2: GF(2)\n"
               << "                          256: GF(256)\n"
               << "                           31: GF(31)\n"
-              << "                          310: GF(31) without bitops\n"
               << "  -c  --const           Use constant field elements for system (no argument).\n"
               << "  -b  --bucket          Use constant with buckets (no argument, requires '-c').\n"
-              << "  -a                    Use average const-cost prediction (default, no argument, requires '-c').\n"
-              << "  -e                    Use exact const-cost prediction (no argument, requires '-c').\n"
               << "  -s, --seed <arg>      Specify the seed (required argument).\n"
               << "      --perm <arg>      Specify the seed for system permutation (required argument).\n"
-//              << "      --GF2-opt         Enable GF2 optimization (no argument).\n"
-              << "      --pred            Run prediction only.\n"
               << "      --trace           Enable trace output (no argument).\n"
               << "      --f-cost          Print field cost and exit.\n"
               << "  -h, --help            Show this help message and exit.\n"
@@ -131,12 +123,8 @@ int main(int argc, char* argv[])
       {"field", required_argument, NULL, 'q'},
       {"const", no_argument, NULL, 'c'},
       {"bucket", no_argument, NULL, 'b'},
-      {"average-cost", no_argument, NULL, 'a'},
-      {"exact-cost", no_argument, NULL, 'e'},
       {"seed", required_argument, NULL, 's'},
       {"perm", required_argument, NULL, 0},
-//      {"GF2-opt", no_argument, NULL, 0},
-      {"pred", no_argument, NULL, 0},
       {"trace", no_argument, NULL, 0},
       {"f-cost", no_argument, NULL, 0},
       {"help", no_argument, NULL, 'h'},
@@ -156,14 +144,8 @@ int main(int argc, char* argv[])
 
       if (opt == 0) // Long options without short options return 0
       {
-//         if (std::string(longopts[longindex].name) == "GF2-opt")
-//            GF2_opt = true;
-
          if (std::string(longopts[longindex].name) == "perm")
             perm_seed = stoull(optarg, nullptr, 0);
-
-         if (std::string(longopts[longindex].name) == "pred")
-            run_XL = false;
 
          if (std::string(longopts[longindex].name) == "trace")
             trace = true;
@@ -222,12 +204,8 @@ int main(int argc, char* argv[])
 
    cout << "q: " << field << "  n: " << n << "  m: " << m << "  D: " << D << "\n\n";
 
-   if (field == 2)
-      GF2_opt = true;
-
    cout << "seed: " << seed << "\n";
    cout << "field: " << field << "\n";
-   cout << "const cost mode: " << (const_cost_average ? "average" : "exact") << "\n";
    cout << "\n";
 
    bit::clear_all();
@@ -251,9 +229,6 @@ int main(int argc, char* argv[])
          else
            XL<GF31, GF31>(n, m, D);
          break;
-      case 310:
-         XL<GF31fop, GF31fop>(n, m, D);
-         break;
       case 256:
          field_cost<GF256, GF256const>();
 
@@ -262,6 +237,9 @@ int main(int argc, char* argv[])
          else
            XL<GF256, GF256>(n, m, D);
          break;
+      default:
+         cerr << "Field " << field << " not supported!\n";
+         return -1;
    }
 
    return 0;

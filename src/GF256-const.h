@@ -302,51 +302,6 @@ inline static std::array<mul_func256,256> mul_funcs256 = {{
     mul248,mul249,mul250,mul251,mul252,mul253,mul254,mul255
 }};
 
-//direct counting of gf256 additions in each chain
-inline static std::array<int,256> mul_funcs256_add_counts = []() {
-    std::array<int,256> counts{};
-    GF256 probe(1);
-    for (int i = 0; i < 256; i++) {
-        GF256::clear_all();
-        (void)mul_funcs256[i](probe);
-        counts[i] = int(GF256::ops(field_ops_add));
-    }
-    GF256::clear_all();
-    return counts;
-}();
-
-//direct counting of gf256 doublings in each chain
-inline static std::array<int,256> mul_funcs256_dbl_counts = []() {
-   std::array<int,256> counts{};
-   GF256 probe(1);
-   for (int i = 0; i < 256; i++) {
-      GF256::clear_all();
-      (void)mul_funcs256[i](probe);
-      counts[i] = int(GF256::ops(field_ops_dbl));
-   }
-   GF256::clear_all();
-   return counts;
-}();
-
-//// Convert bit vector to integer index
-//inline static int bit_vector_to_int(const std::vector<bit>& v)
-//{
-//    int result = 0;
-//    for (size_t i = 0; i < v.size(); i++) {
-//        if (v[i].value()) {
-//            result |= (1 << i);
-//        }
-//    }
-//    return result;
-//}
-
-//inline GF256 GF256_mult(const GF256& a, const GF256& b)
-//{
-//    int idx = bit_vector_to_int(b.v);
-//    return mul_funcs256[idx](a);
-//}
-
-
 class GF256const : public Field<GF256const>
 {
     public:
@@ -364,18 +319,13 @@ class GF256const : public Field<GF256const>
 
     GF256const(const int32_t v)
     {
-        this->v = v;// & 0xff;
+        this->v = v;
     }
 
     static GF256const random_element()
     {
        return GF256const(random_val(256));
     }
-
-//    operator int() const {
-//       return this->v;
-//    }
-
 
   protected:
 
@@ -425,7 +375,24 @@ class GF256const : public Field<GF256const>
        return GF256const(result);
     }
 
-    inline static const uint8_t __inv[256] = {0, 1, 142, 244, 71, 167, 122, 186, 173, 157, 221, 152, 61, 170, 93, 150, 216, 114, 192, 88, 224, 62, 76, 102, 144, 222, 85, 128, 160, 131, 75, 42, 108, 237, 57, 81, 96, 86, 44, 138, 112, 208, 31, 74, 38, 139, 51, 110, 72, 137, 111, 46, 164, 195, 64, 94, 80, 34, 207, 169, 171, 12, 21, 225, 54, 95, 248, 213, 146, 78, 166, 4, 48, 136, 43, 30, 22, 103, 69, 147, 56, 35, 104, 140, 129, 26, 37, 97, 19, 193, 203, 99, 151, 14, 55, 65, 36, 87, 202, 91, 185, 196, 23, 77, 82, 141, 239, 179, 32, 236, 47, 50, 40, 209, 17, 217, 233, 251, 218, 121, 219, 119, 6, 187, 132, 205, 254, 252, 27, 84, 161, 29, 124, 204, 228, 176, 73, 49, 39, 45, 83, 105, 2, 245, 24, 223, 68, 79, 155, 188, 15, 92, 11, 220, 189, 148, 172, 9, 199, 162, 28, 130, 159, 198, 52, 194, 70, 5, 206, 59, 13, 60, 156, 8, 190, 183, 135, 229, 238, 107, 235, 242, 191, 175, 197, 100, 7, 123, 149, 154, 174, 182, 18, 89, 165, 53, 101, 184, 163, 158, 210, 247, 98, 90, 133, 125, 168, 58, 41, 113, 200, 246, 249, 67, 215, 214, 16, 115, 118, 120, 153, 10, 25, 145, 20, 63, 230, 240, 134, 177, 226, 241, 250, 116, 243, 180, 109, 33, 178, 106, 227, 231, 181, 234, 3, 143, 211, 201, 66, 212, 232, 117, 127, 255, 126, 253};
+    inline static const uint8_t __inv[256] = {0, 1, 142, 244, 71, 167, 122,
+       186, 173, 157, 221, 152, 61, 170, 93, 150, 216, 114, 192, 88, 224, 62,
+       76, 102, 144, 222, 85, 128, 160, 131, 75, 42, 108, 237, 57, 81, 96, 86,
+       44, 138, 112, 208, 31, 74, 38, 139, 51, 110, 72, 137, 111, 46, 164, 195,
+       64, 94, 80, 34, 207, 169, 171, 12, 21, 225, 54, 95, 248, 213, 146, 78,
+       166, 4, 48, 136, 43, 30, 22, 103, 69, 147, 56, 35, 104, 140, 129, 26,
+       37, 97, 19, 193, 203, 99, 151, 14, 55, 65, 36, 87, 202, 91, 185, 196,
+       23, 77, 82, 141, 239, 179, 32, 236, 47, 50, 40, 209, 17, 217, 233, 251,
+       218, 121, 219, 119, 6, 187, 132, 205, 254, 252, 27, 84, 161, 29, 124,
+       204, 228, 176, 73, 49, 39, 45, 83, 105, 2, 245, 24, 223, 68, 79, 155,
+       188, 15, 92, 11, 220, 189, 148, 172, 9, 199, 162, 28, 130, 159, 198, 52,
+       194, 70, 5, 206, 59, 13, 60, 156, 8, 190, 183, 135, 229, 238, 107, 235,
+       242, 191, 175, 197, 100, 7, 123, 149, 154, 174, 182, 18, 89, 165, 53,
+       101, 184, 163, 158, 210, 247, 98, 90, 133, 125, 168, 58, 41, 113, 200,
+       246, 249, 67, 215, 214, 16, 115, 118, 120, 153, 10, 25, 145, 20, 63,
+       230, 240, 134, 177, 226, 241, 250, 116, 243, 180, 109, 33, 178, 106,
+       227, 231, 181, 234, 3, 143, 211, 201, 66, 212, 232, 117, 127, 255, 126,
+       253};
 
     GF256const _inv() const override
     {
@@ -439,8 +406,8 @@ class GF256const : public Field<GF256const>
 
   public:
 
-    explicit operator GF256() const {          // implicit conversion
-        return GF256(v);              // adapt to however GF256 is constructed
+    explicit operator GF256() const {
+        return GF256(v);
     }
 
     using Field<GF256const>::operator-;
@@ -471,11 +438,5 @@ inline GF256 operator*(const GF256& a, const GF256const& b) {
    GF256const::nummixedmul += 1;
    return mul_funcs256[b.v](a);
 }
-
-// inline GF256 GF256_mult(const GF256& a, const GF256const& b)
-// {
-//     return mul_funcs256[b.v](a);
-// }
-
 
 #endif // GF256_CONST_H

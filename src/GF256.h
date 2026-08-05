@@ -12,14 +12,6 @@ vector<bit> gf256_mul_bs_red(const vector<bit> &a, const vector<bit> &b);
 vector<bit> shortvec(const vector<bit> &a);
 vector<bit> gf256_inverse(const vector<bit> &a);
 
-//// x^8 + x^4 + x^3 + x^2 + 1 the reduction polynomial for GF(256)
-//bit GF256red[] = {bit(1), bit(0), bit(1), bit(1), bit(1), bit(0), bit(0), bit(0), bit(1)};
-//
-//using GF256 = extension_field<bit, GF256red>;
-//
-//template<>
-//class extension_field<bit, GF256red>
-
 class GF256 : public Field<GF256>
 {
     public:
@@ -34,13 +26,11 @@ class GF256 : public Field<GF256>
 
     static const size_t ext_deg = std::extent<decltype(GF256red)>::value - 1;
 
-    //extension_field<bit, GF256red>(const vector<bit> &v)
     GF256(const vector<bit> &v)
     {
         this->v = v;
     }
 
-    //extension_field<bit, GF256red>(const bigint v)
     GF256(const bigint v)
     {
         this->v = bit_vector_from_integer(v, 8);
@@ -61,16 +51,6 @@ class GF256 : public Field<GF256>
        return ret;
     }
 
-//    operator int() const {
-//       int val = 0;
-//
-//       for (int i = this->v.size() - 1; i >= 0; i--)
-//          val = (val << 1) | this->v.at(i).value();
-//
-//       return val;
-//    }
-
-
   protected:
 
     GF256 _add(const GF256 &c) const
@@ -85,7 +65,6 @@ class GF256 : public Field<GF256>
 
     GF256 _sub(const GF256 &c) const
     {
-        // in binary fields addition IS subtraction
         return GF256(gf256_add(this->v, c.v));
     }
 
@@ -120,13 +99,9 @@ class GF256 : public Field<GF256>
         return GF256(gf256_inverse(this->v));
     }
 
-    //template <unsigned p, int red_poly[]>
-    //friend ostream& operator<<(ostream& os, const extension_field<p, red_poly>& v);
     friend ostream& operator<<(ostream& os, const GF256& v);
 };
 
-//template <unsigned p, int red_poly[]>
-//ostream& operator<<(ostream& os, const extension_field<p, red_poly>& v)
 ostream& operator<<(ostream& os, const GF256& v)
 {
     int val = 0;

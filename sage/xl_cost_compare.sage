@@ -101,8 +101,6 @@ def run_xl_test(
         cmd.append("-c")
     if bucket:
         cmd.append("-b")
-#    if q==2:
-#        cmd.append("--GF2-opt")
     if trace:
         cmd.append("--trace")
 
