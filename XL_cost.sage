@@ -1,5 +1,4 @@
 #!/usr/bin/env sage
-# xl_cost_compare.sage
 
 import argparse
 import dataclasses
@@ -54,9 +53,7 @@ class XLRun:
     macaulay_not_zero: Optional[int] = None
 
     # Runtime-data prediction overrides.  These are set only when
-    # --use-macaulay-runtime-data is requested.
     nominal_mul_const_cost: Optional[float] = None
-#    mul_const_cost_from_data: bool = False
     bucket_A_W_nominal: Optional[float] = None
     bucket_A_W_from_data: Optional[float] = None
     use_macaulay_runtime_data: bool = False
@@ -88,10 +85,17 @@ def ensure_xl_test_built(exe_path):
     exe_path = Path(exe_path).resolve()
     project_root = exe_path.parents[2]  # adjust to your layout
 
-    subprocess.run(
+    result = subprocess.run(
         ["make", "-C", str(project_root) + "/src"],
-        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
+    
+    if result.returncode != 0:
+        raise RuntimeError(
+            "Failed to build XL-test:\n" + result.stdout
+        )
 
 def run_xl_test(
     exe: str,
@@ -292,7 +296,6 @@ def parse_output(text: str) -> XLRun:
     )
 
     return XLRun(
-#        raw_output=text,
         q=int(header.group(1)),
         n=int(header.group(2)),
         m=int(header.group(3)),
@@ -423,7 +426,7 @@ def select_prediction(run: XLRun, const: bool, bucket: bool) -> Prediction:
                 f"expression after substitution: {e}\n"
                 f"remaining variables: {vars_left}"
             )
-        numeric[name] = RR(e)
+        numeric[name] = QQ(e)
 
     return Prediction(
         mode=prediction_mode_name(run.q, const, bucket),
@@ -556,7 +559,7 @@ def select_nominal_A_W_count(run: XLRun, const: bool, bucket: bool) -> float:
     }
 
     generic = select_generic_formulas(const=const, bucket=bucket)
-    return float(RR(generic["A_W"].subs(subs)))
+    return float(QQ(generic["A_W"].subs(subs)))
 
 
 def bucket_A_W_from_macaulay_not_zero(run: XLRun) -> Optional[float]:
@@ -585,10 +588,10 @@ def bucket_A_W_from_macaulay_not_zero(run: XLRun) -> Optional[float]:
     R_val, _ = model_R_Z_numeric(run.q, run.n, run.m, run.D)
 
     qv = ZZ(run.q)
-    Rf = RR(R_val)
-    N_nonzero = RR(run.macaulay_not_zero)
+    Rf = QQ(R_val)
+    N_nonzero = QQ(run.macaulay_not_zero)
 
-    return float(RR(2*R_val - 1) * (N_nonzero + RR(qv - 2) * Rf))
+    return float(QQ(2*R_val - 1) * (N_nonzero + QQ(qv - 2) * Rf))
 
 
 def mul_const_cost_gt1_from_nominal(q_value: int, nominal_mul_const: float) -> Optional[float]:
@@ -787,9 +790,9 @@ def predicted_bm_counts_and_bits(run: XLRun):
         d: ZZ(run.D),
     }
 
-    A_val = RR(A_BM.subs(subs))
-    S_val = RR(S_BM.subs(subs))
-    M_val = RR(M_BM.subs(subs))
+    A_val = QQ(A_BM.subs(subs))
+    S_val = QQ(S_BM.subs(subs))
+    M_val = QQ(M_BM.subs(subs))
 
     field_bit_ops = (
         A_val * run.bit_costs["add"]
@@ -797,7 +800,7 @@ def predicted_bm_counts_and_bits(run: XLRun):
         + M_val * run.bit_costs["mul"]
     )
 
-    extra_bits = RR(bm_extra_bits_numeric(run.q, R_val))
+    extra_bits = QQ(bm_extra_bits_numeric(run.q, R_val))
 
     counts = {
         "A_BM": A_val,
@@ -806,7 +809,7 @@ def predicted_bm_counts_and_bits(run: XLRun):
         "BM_extra": extra_bits,
     }
 
-    return counts, RR(field_bit_ops + extra_bits)
+    return counts, QQ(field_bit_ops + extra_bits)
 
 def predicted_la_counts_and_bits(run: XLRun, const: bool, bucket: bool):
     """
@@ -842,12 +845,12 @@ def predicted_la_counts_and_bits(run: XLRun, const: bool, bucket: bool):
     A_M_expr = f["M_W"]
     M_W_fixed_expr = f['M_fixed']
 
-    A_W_val = RR(A_W_expr.subs(subs))
-    A_M_val = RR(A_M_expr.subs(subs))
-    M_W_fixed_val = RR(M_W_fixed_expr.subs(subs))
+    A_W_val = QQ(A_W_expr.subs(subs))
+    A_M_val = QQ(A_M_expr.subs(subs))
+    M_W_fixed_val = QQ(M_W_fixed_expr.subs(subs))
 
     if const and bucket and run.bucket_A_W_from_data is not None:
-        A_W_val = RR(run.bucket_A_W_from_data)
+        A_W_val = QQ(run.bucket_A_W_from_data)
 
     bit_ops = (
         A_W_val * run.bit_costs["add"]
@@ -865,430 +868,11 @@ def predicted_la_counts_and_bits(run: XLRun, const: bool, bucket: bool):
         "M_W_fixed": M_W_fixed_val,
     }
 
-    return counts, RR(bit_ops)
+    return counts, QQ(bit_ops)
 
 # ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
-
-# def bit_cost_prediction_with_mul_const(pred: Prediction, run: XLRun, mul_const_cost: float):
-#     """
-#     Diagnostic-only recomputation of predicted bit ops using a replacement
-#     constant-multiplication cost.
-# 
-#     Does not modify pred or run.
-#     """
-#     c = run.bit_costs
-# 
-#     add_cost = pred.A * c["add"]
-#     sub_cost = pred.S * c["sub"]
-#     mul_cost = pred.M * c["mul"]
-#     inv_cost = pred.I * c["inv"]
-#     fixed_mul_cost = pred.M_fixed * mul_const_cost
-#     bm_extra_cost = getattr(pred, "BM_extra_bits", 0.0)
-# 
-#     total = (
-#         add_cost
-#         + sub_cost
-#         + mul_cost
-#         + inv_cost
-#         + fixed_mul_cost
-#         + bm_extra_cost
-#     )
-# 
-#     return {
-#         "A": add_cost,
-#         "S": sub_cost,
-#         "M": mul_cost,
-#         "I": inv_cost,
-#         "M_fixed": fixed_mul_cost,
-#         "BM_extra": bm_extra_cost,
-#         "total": total,
-#     }
-# 
-# def predicted_bm_bits_with_mul_const(run: XLRun, mul_const_cost: float):
-#     """
-#     BM does not use M_fixed, so this is normally identical to the usual BM
-#     prediction. Kept for diagnostic table symmetry.
-#     """
-#     bm_counts, bm_bits = predicted_bm_counts_and_bits(run)
-#     return bm_bits
-# 
-# def predicted_la_bits_with_mul_const(
-#     run: XLRun,
-#     const: bool,
-#     bucket: bool,
-#     mul_const_cost: float,
-# ):
-#     """
-#     Diagnostic-only LA bit prediction using a replacement const-mul cost.
-#     """
-#     la_counts, _ = predicted_la_counts_and_bits(
-#         run,
-#         const=const,
-#         bucket=bucket,
-#     )
-# 
-#     A_W = float(la_counts["A_W"])
-#     A_M = float(la_counts["A_M"])
-#     M_W_fixed = float(la_counts["M_W_fixed"])
-# 
-#     return (
-#         A_W * run.bit_costs["add"]
-#         + A_M * run.bit_costs["mul"]
-#         + M_W_fixed * mul_const_cost
-#     )
-# 
-# 
-# def print_data_dependent_mul_const_comparison(
-#     run: XLRun,
-#     pred: Prediction,
-#     const: bool,
-#     bucket: bool,
-# ) -> None:
-#     """
-#     Print alternative predicted totals using the data-dependent mul_const
-#     recovered from the Macaulay multiplication diagnostic.
-# 
-#     This is diagnostic only and does not replace the main prediction.
-#     """
-#     if (const and not bucket):
-#         pass
-#     else:
-#         return
-# 
-# 
-#     eff = effective_mul_const_from_macaulay(
-#         run,
-#         const=const,
-#         bucket=bucket,
-#     )
-# 
-#     if eff is None:
-#         return
-# 
-#     alt_breakdown = bit_cost_prediction_with_mul_const(
-#         pred,
-#         run,
-#         mul_const_cost=eff,
-#     )
-# 
-#     alt_total = alt_breakdown["total"]
-#     alt_bm = predicted_bm_bits_with_mul_const(
-#         run,
-#         mul_const_cost=eff,
-#     )
-#     alt_la = predicted_la_bits_with_mul_const(
-#         run,
-#         const=const,
-#         bucket=bucket,
-#         mul_const_cost=eff,
-#     )
-# 
-#     print()
-#     print("Data-dependent mul_const diagnostic")
-#     print("===================================")
-#     print(f"{'nominal mul_const':>28}: {fmt_intlike(run.bit_costs['mul_const'])}")
-#     print(f"{'Macaulay-derived mul_const':>28}: {fmt_intlike(eff)}")
-# 
-#     print()
-#     print(f"{'quantity':35} {'predicted':>18} {'measured':>18} {'ratio':>12} {'rel err':>12}")
-#     print("-" * 100)
-# 
-#     rows = [
-#         ("program total bit ops", alt_total, run.measured_bit_ops),
-#         ("program BM bit ops", alt_bm, run.measured_bm_bit_ops),
-#         ("program LA bit ops", alt_la, run.measured_la_bit_ops),
-#     ]
-# 
-#     for name, p, m in rows:
-#         print(
-#             f"{name:35} "
-#             f"{fmt_intlike(float(p)):>18} "
-#             f"{fmt_intlike(float(m)):>18} "
-#             f"{ratio(float(p), float(m)):>12.6f} "
-#             f"{rel_error(float(p), float(m)):>12.6%}"
-#         )
-# 
-# def avg_mul_cost_gt1(run: XLRun) -> Optional[float]:
-#     """
-#     Average multiplication-chain cost conditioned on the constant being
-#     neither 0 nor 1.
-# 
-#     Assumes run.bit_costs["mul_const"] is the average over all q field values.
-#     """
-#     qv = run.q
-# 
-#     if qv in (0, 1, 2):
-#         return None
-# 
-#     nominal = (
-#         run.nominal_mul_const_cost
-#         if run.nominal_mul_const_cost is not None
-#         else run.bit_costs["mul_const"]
-#     )
-#     return nominal * qv / (qv - 2)
-# 
-# def bucket_macaulay_bit_ops_from_not_zero(run: XLRun) -> Optional[float]:
-#     """
-#     Diagnostic-only estimate for one bucket-mode Macaulay multiplication.
-# 
-#     GF(2):
-#       - one addition for each nonzero input entry
-#       - no >1 buckets and no constant multiplications
-# 
-#     q > 2:
-#       - one addition into a bucket for each nonzero input entry
-#       - one bucket-combination addition for each nonzero non-one bucket
-#         per output row: (q-2)*R_q
-#       - one multiplication by the bucket constant for each such bucket:
-#         (q-2)*R_q
-#     """
-#     if run.macaulay_not_zero is None:
-#         return None
-# 
-#     qv = run.q
-#     R_val, _ = model_R_Z_numeric(run.q, run.n, run.m, run.D)
-# 
-#     N_nonzero = float(run.macaulay_not_zero)
-#     Rf = float(R_val)
-#     C_A = float(run.bit_costs["add"])
-# 
-#     # GF(2): constants are only 0 and 1.
-#     # Nonzero means 1, so the cost is just adding selected entries.
-#     if qv == 2:
-#         return N_nonzero * C_A
-# 
-#     if qv <= 1:
-#         return None
-# 
-#     C_M_gt1 = avg_mul_cost_gt1(run)
-#     if C_M_gt1 is None:
-#         return None
-# 
-#     bucket_count = (qv - 2) * Rf
-# 
-#     return (
-#         N_nonzero * C_A
-#         + bucket_count * C_A
-#         + bucket_count * C_M_gt1
-#     )
-
-# def print_bucket_not_zero_diagnostic(
-#     run: XLRun,
-#     pred: Prediction,
-#     const: bool,
-#     bucket: bool,
-# ) -> None:
-#     if not (const and bucket):
-#         return
-# 
-#     if run.macaulay_not_zero is None:
-#         return
-# 
-#     qv = run.q
-#     R_val, _ = model_R_Z_numeric(run.q, run.n, run.m, run.D)
-# 
-#     one_macaulay = bucket_macaulay_bit_ops_from_not_zero(run)
-#     if one_macaulay is None:
-#         return
-# 
-#     alt_la = predicted_la_bits_with_bucket_not_zero(run, const, bucket)
-#     if alt_la is None:
-#         return
-# 
-#     bm_counts, alt_bm = predicted_bm_counts_and_bits(run)
-# 
-#     non_bm_la = non_bm_la_predicted_bits(
-#         run,
-#         pred,
-#         const=const,
-#         bucket=bucket,
-#     )
-# 
-#     alt_total = float(alt_bm) + float(alt_la) + float(non_bm_la)
-# 
-#     N_nonzero = float(run.macaulay_not_zero)
-#     C_A = float(run.bit_costs["add"])
-# 
-#     print()
-#     print("Bucket not-zero diagnostic")
-#     print("==========================")
-#     print(f"{'Macaulay not zero':>30}: {fmt_intlike(N_nonzero)}")
-#     print(f"{'input bucket add bits':>30}: {fmt_intlike(N_nonzero * C_A)}")
-# 
-#     if qv == 2:
-#         print(f"{'GF(2) bucket multiplications':>30}: 0")
-#         print(f"{'GF(2) bucket-combine adds':>30}: 0")
-#     else:
-#         bucket_count = (qv - 2) * float(R_val)
-#         C_M_gt1 = avg_mul_cost_gt1(run)
-# 
-#         print(f"{'bucket count (q-2)R_q':>30}: {fmt_intlike(bucket_count)}")
-#         print(f"{'nominal mul_const avg over GF(q)':>30}: {fmt_intlike(run.bit_costs['mul_const'])}")
-#         print(f"{'avg mul_const over >1':>30}: {fmt_intlike(C_M_gt1)}")
-#         print(f"{'bucket-combine add bits':>30}: {fmt_intlike(bucket_count * C_A)}")
-#         print(f"{'bucket multiplication bits':>30}: {fmt_intlike(bucket_count * C_M_gt1)}")
-# 
-#     print(f"{'one Macaulay bucket bits':>30}: {fmt_intlike(one_macaulay)}")
-#     print(f"{'non-BM/LA predicted bits':>30}: {fmt_intlike(non_bm_la)}")
-# 
-#     print()
-#     print(f"{'quantity':35} {'predicted':>18} {'measured':>18} {'ratio':>12} {'rel err':>12}")
-#     print("-" * 100)
-# 
-#     rows = [
-#         ("program total bit ops", alt_total, run.measured_bit_ops),
-#         ("program BM bit ops", alt_bm, run.measured_bm_bit_ops),
-#         ("program LA bit ops", alt_la, run.measured_la_bit_ops),
-#     ]
-# 
-#     for name, p, m in rows:
-#         print(
-#             f"{name:35} "
-#             f"{fmt_intlike(float(p)):>18} "
-#             f"{fmt_intlike(float(m)):>18} "
-#             f"{ratio(float(p), float(m)):>12.6f} "
-#             f"{rel_error(float(p), float(m)):>12.6%}"
-#         )
-# 
-# def predicted_la_bits_with_bucket_not_zero(
-#     run: XLRun,
-#     const: bool,
-#     bucket: bool,
-# ) -> Optional[float]:
-#     """
-#     Diagnostic-only LA bit prediction for bucket mode using the concrete
-#     Macaulay not-zero count.
-# 
-#     Assumes the printed 'Macaulay not zero' refers to one Macaulay
-#     vector-matrix multiplication, and LA repeats this for (2R_q - 1)
-#     iterations, matching the current LA model.
-#     """
-#     if not (const and bucket):
-#         return None
-# 
-#     one_macaulay = bucket_macaulay_bit_ops_from_not_zero(run)
-#     if one_macaulay is None:
-#         return None
-# 
-#     R_val, _ = model_R_Z_numeric(run.q, run.n, run.m, run.D)
-# 
-#     return float(2 * R_val - 1) * float(one_macaulay)
-# 
-# 
-# # def predicted_total_bits_with_bucket_not_zero(
-# #     run: XLRun,
-# #     pred: Prediction,
-# #     const: bool,
-# #     bucket: bool,
-# # ) -> Optional[float]:
-# #     """
-# #     Diagnostic-only total prediction for bucket mode using the concrete
-# #     not-zero Macaulay statistic for LA.
-# #     """
-# #     if not (const and bucket):
-# #         return None
-# # 
-# #     alt_la = predicted_la_bits_with_bucket_not_zero(run, const, bucket)
-# #     if alt_la is None:
-# #         return None
-# # 
-# #     bm_counts, alt_bm = predicted_bm_counts_and_bits(run)
-# # 
-# #     # The total is BM + LA + whatever non-BM/non-LA terms are included in
-# #     # pred.bit_ops_total but not in bm/la. If your program total is exactly
-# #     # BM + LA, this can simply be:
-# #     return float(alt_bm) + float(alt_la)
-# 
-# def non_bm_la_predicted_bits(run: XLRun, pred: Prediction, const: bool, bucket: bool) -> float:
-#     """
-#     Predicted part of total bit ops not included in program BM or LA counters.
-# 
-#     This covers evaluation, normalization, and inversion costs.
-#     """
-#     _, bm_bits = predicted_bm_counts_and_bits(run)
-#     _, la_bits = predicted_la_counts_and_bits(run, const=const, bucket=bucket)
-# 
-#     return float(pred.bit_ops_total) - float(bm_bits) - float(la_bits)
-# 
-# def print_bucket_not_zero_diagnostic(
-#     run: XLRun,
-#     pred: Prediction,
-#     const: bool,
-#     bucket: bool,
-# ) -> None:
-#     if not (const and bucket):
-#         return
-# 
-#     if run.macaulay_not_zero is None:
-#         return
-# 
-#     qv = run.q
-#     R_val, _ = model_R_Z_numeric(run.q, run.n, run.m, run.D)
-# 
-#     one_macaulay = bucket_macaulay_bit_ops_from_not_zero(run)
-#     if one_macaulay is None:
-#         return
-# 
-#     alt_la = predicted_la_bits_with_bucket_not_zero(run, const, bucket)
-#     if alt_la is None:
-#         return
-# 
-#     bm_counts, alt_bm = predicted_bm_counts_and_bits(run)
-# 
-#     non_bm_la = non_bm_la_predicted_bits(
-#         run,
-#         pred,
-#         const=const,
-#         bucket=bucket,
-#     )
-# 
-#     alt_total = float(alt_bm) + float(alt_la) + float(non_bm_la)
-# 
-#     N_nonzero = float(run.macaulay_not_zero)
-#     C_A = float(run.bit_costs["add"])
-# 
-#     print()
-#     print("Bucket not-zero diagnostic")
-#     print("==========================")
-#     print(f"{'Macaulay not zero':>30}: {fmt_intlike(N_nonzero)}")
-#     print(f"{'input bucket add bits':>30}: {fmt_intlike(N_nonzero * C_A)}")
-# 
-#     if qv == 2:
-#         print(f"{'GF(2) bucket multiplications':>30}: 0")
-#         print(f"{'GF(2) bucket-combine adds':>30}: 0")
-#     else:
-#         bucket_count = (qv - 2) * float(R_val)
-#         C_M_gt1 = avg_mul_cost_gt1(run)
-# 
-#         print(f"{'bucket count (q-2)R_q':>30}: {fmt_intlike(bucket_count)}")
-#         print(f"{'nominal mul_const avg over GF(q)':>30}: {fmt_intlike(run.bit_costs['mul_const'])}")
-#         print(f"{'avg mul_const over >1':>30}: {fmt_intlike(C_M_gt1)}")
-#         print(f"{'bucket-combine add bits':>30}: {fmt_intlike(bucket_count * C_A)}")
-#         print(f"{'bucket multiplication bits':>30}: {fmt_intlike(bucket_count * C_M_gt1)}")
-# 
-#     print(f"{'one Macaulay bucket bits':>30}: {fmt_intlike(one_macaulay)}")
-#     print(f"{'non-BM/LA predicted bits':>30}: {fmt_intlike(non_bm_la)}")
-# 
-#     print()
-#     print(f"{'quantity':35} {'predicted':>18} {'measured':>18} {'ratio':>12} {'rel err':>12}")
-#     print("-" * 100)
-# 
-#     rows = [
-#         ("program total bit ops", alt_total, run.measured_bit_ops),
-#         ("program BM bit ops", alt_bm, run.measured_bm_bit_ops),
-#         ("program LA bit ops", alt_la, run.measured_la_bit_ops),
-#     ]
-# 
-#     for name, p, m in rows:
-#         print(
-#             f"{name:35} "
-#             f"{fmt_intlike(float(p)):>18} "
-#             f"{fmt_intlike(float(m)):>18} "
-#             f"{ratio(float(p), float(m)):>12.6f} "
-#             f"{rel_error(float(p), float(m)):>12.6%}"
-#         )
 
 def print_macaulay_mul_debug(run: XLRun, const: bool, bucket: bool) -> None:
     if run.macaulay_mul_bit_ops is None:
@@ -1410,22 +994,6 @@ def print_report(run: XLRun, pred: Prediction, const: bool, bucket: bool) -> Non
 
     print_macaulay_mul_debug(run, const=const, bucket=bucket)
 
-#    if not run.use_macaulay_runtime_data:
-#        print_data_dependent_mul_const_comparison(
-#            run,
-#            pred,
-#            const=const,
-#            bucket=bucket,
-#        )
-#
-#        print_bucket_not_zero_diagnostic(
-#            run,
-#            pred,
-#            const=const,
-#            bucket=bucket,
-#        )
-
-
     print()
     print("Comparison")
     print("==========")
@@ -1460,11 +1028,11 @@ def fmt_pred_value(x):
     """
     Format prediction values for wrapper/pred output.
 
-    Predictions are sometimes Sage/RR/float values because of averaged
+    Predictions are sometimes Sage/QQ/float values because of averaged
     mul_const costs. For wrapper-style output, print rounded integers.
     """
     try:
-        return str(ZZ(round(RR(x))))
+        return str(ZZ(round(QQ(x))))
     except Exception:
         return str(int(round(float(x))))
 
@@ -1538,7 +1106,7 @@ def log2_numeric(x):
     Keep prediction arithmetic exact elsewhere.
     """
     try:
-        return float(log(RR(x), 2))
+        return float(log(QQ(x), 2))
     except Exception:
         import math
         return math.log2(float(x))
@@ -1617,13 +1185,6 @@ def print_pretty_prediction(run, pred, const=False, bucket=False):
         const=const,
         bucket=bucket,
     )
-
-#    for key, label in [
-#        ("la_pred_bit_ops", "linear algebra"),
-#        ("bm_pred_bit_ops", "Berlekamp-Massey"),
-#        ("bit_ops_total", "total"),
-#    ]:
-#        value = pred_get(pred, key)
 
     for label, value in [("total", pred_get(pred, "bit_ops_total")), ("linear algebra", la_pred_bit_ops), ("Berlekamp-Massey", bm_pred_bit_ops)]:
         if value is not None:

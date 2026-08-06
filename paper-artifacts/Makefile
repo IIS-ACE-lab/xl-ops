@@ -114,9 +114,9 @@ build: $(XLTEST)
 # Prediction CSV
 # --------------------------------------------------------------------
 
-$(PRED_CSV): $(XLTEST) xl_predict_range.sage $(XLCOST) $(XLCOSTFORMULAS) | $(DATA)
-	$(SAGE) xl_predict_range.sage \
-		--compare-file $(XLCOST) \
+$(PRED_CSV): $(XLTEST) predict_range.sage $(XLCOST) $(XLCOSTFORMULAS) | $(DATA)
+	$(SAGE) predict_range.sage \
+		--XL_cost $(XLCOST) \
 		--exe $(XLTEST) \
 		--n-min $(N_MIN) \
 		--n-max $(N_MAX) \
@@ -156,19 +156,19 @@ all-data: $(PRED_CSV) $(GET_D_FILES)
 
 $(ART)/tables/fukuoka_table.tex: generate_guessing_table.sage $(XLCOST) $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
 	$(SAGE) generate_guessing_table.sage \
-		--compare-file $(XLCOST) \
+		--XL_cost $(XLCOST) \
 		--exe $(XLTEST) \
 		--guessing-output none \
 		--fukuoka-output $@
 
 $(ART)/tables/guessing_table.tex: generate_guessing_table.sage $(XLCOST) $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
 	$(SAGE) generate_guessing_table.sage \
-		--compare-file $(XLCOST) \
+		--XL_cost $(XLCOST) \
 		--exe $(XLTEST) \
 		--guessing-output $@
 
-$(ART)/tables/op-costs.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/tables/op-costs.tex: latex_formulas.sage $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--op-cost \
 		--xl-test $(XLTEST) \
@@ -186,8 +186,8 @@ $(ERROR_DATA_STAMP): gen_prediction_error_data.sh $(XLCOST) $(XLCOSTFORMULAS) $(
 	bash gen_prediction_error_data.sh \
 		--out-dir $(ERROR_DATA) \
 		--sage $(SAGE) \
-		--compare $(XLCOST) \
-		--xl-test $(XLTEST) \
+		--XL_cost $(XLCOST) \
+		--XL_test $(XLTEST) \
 		--jobs 90% \
 		--repeats 100
 
@@ -204,44 +204,44 @@ prediction-error-artifacts: $(ERROR_TABLE) $(ERROR_FIGURE)
 # LaTeX formula snippets
 # --------------------------------------------------------------------
 
-$(ART)/formulas/table-I.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/table-I.tex: latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--table-I --style single-fraction \
 		> $@
 
-$(ART)/formulas/table-II.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/table-II.tex: latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--table-II --style sage \
 		> $@
 
-$(ART)/formulas/op-formulas-base.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/op-formulas-base.tex: latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--all-base --style sage \
 		> $@
 
-$(ART)/formulas/op-formulas-const.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/op-formulas-const.tex: latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--all-const --style sage \
 		> $@
 
-$(ART)/formulas/op-formulas-const-bucket.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/op-formulas-const-bucket.tex: latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--all-const-bucket --style sage \
 		> $@
 
-$(ART)/formulas/bm-extra.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/bm-extra.tex: latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--extra-BM --style factor \
 		> $@
 
-$(ART)/formulas/all-bit-ops.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/formulas
-	$(SAGE) xl_latex_formulas.sage \
+$(ART)/formulas/all-bit-ops.tex: latex_formulas.sage $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/formulas
+	$(SAGE) latex_formulas.sage \
 		--formula-file $(XLCOSTFORMULAS) \
 		--bit-costs --xl-test $(XLTEST) --style sage --inline-extra-BM \
 		> $@

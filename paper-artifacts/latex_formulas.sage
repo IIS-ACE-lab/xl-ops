@@ -1,10 +1,9 @@
 #!/usr/bin/env sage
-# xl_formula_tables.sage
 #
-# Print LaTeX formula snippets/tables from xl_cost_formulas.sage.
+# Print LaTeX formula snippets/tables from XL_cost_formulas.sage.
 #
 # The intent is that all mathematical formulas are sourced from
-# xl_cost_formulas.sage; this script only controls presentation.
+# XL_cost_formulas.sage; this script only controls presentation.
 
 import argparse
 import os
@@ -104,7 +103,7 @@ def variant_formulas(variant):
     """
     Return the verified generic formula dictionary for one variant.
 
-    These functions are expected to come from xl_cost_formulas.sage.
+    These functions are expected to come from XL_cost_formulas.sage.
     """
     if variant == "base":
         return generic_baseline_formulas()
@@ -126,7 +125,7 @@ def print_table_I(tex):
     """
     Print LaTeX table for BM, normalization, and evaluation.
 
-    Uses formulas from xl_cost_formulas.sage:
+    Uses formulas from XL_cost_formulas.sage:
         A_BM, S_BM, M_BM
         norm_M, norm_I
         eval_A, eval_M
@@ -166,7 +165,7 @@ def print_table_II(tex):
     Print LaTeX table for LA operation counts for each variant.
 
     This derives the displayed LA components from the verified formula
-    dictionaries in xl_cost_formulas.sage, rather than duplicating formulas.
+    dictionaries in XL_cost_formulas.sage, rather than duplicating formulas.
     """
 
     variants = [
@@ -202,7 +201,7 @@ def print_table_II(tex):
 def structured_all_formula_expr(variant, name, formulas):
     """
     Return the full operation-count formula for --all-* outputs directly
-    from the verified formula dictionary returned by xl_cost_formulas.sage.
+    from the verified formula dictionary returned by XL_cost_formulas.sage.
 
     The dictionary already exposes both the total counts (A, S, M, I,
     M_fixed) and the LA components (A_W, M_W).  For --all-* we use the
@@ -221,7 +220,7 @@ def print_all_variant(tex, variant):
     Variants:
         base, const, buck
 
-    Uses generic_*_formulas() from xl_cost_formulas.sage and reconstructs
+    Uses generic_*_formulas() from XL_cost_formulas.sage and reconstructs
     structured sums from the verified component keys.
     """
     formulas = variant_formulas(variant)
@@ -257,7 +256,7 @@ def print_extra_BM(tex):
     """
     Print LaTeX formulas for the additional non-field BM bit costs.
 
-    The formulas are taken from xl_cost_formulas.sage via
+    The formulas are taken from XL_cost_formulas.sage via
     bm_extra_bits_symbolic(q), not duplicated here.
 
     Presentation notation:
@@ -889,8 +888,8 @@ def main():
 
     parser.add_argument(
         "--formula-file",
-        default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "xl_cost_formulas.sage"),
-        help="Path to xl_cost_formulas.sage",
+        default="../XL_cost_formulas.sage",
+        help="Path to XL_cost_formulas.sage",
     )
 
     parser.add_argument(

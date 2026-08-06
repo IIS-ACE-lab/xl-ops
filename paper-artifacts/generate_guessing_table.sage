@@ -99,14 +99,14 @@ VARIANTS = [
 # Loading XL_cost.sage as a library
 # --------------------------------------------------------------------
 
-def load_compare_file(compare_file):
-    compare_file = os.path.abspath(compare_file)
+def load_XL_cost(XL_cost):
+    XL_cost = os.path.abspath(XL_cost)
 
-    globals()["XL_COST_FILE"] = compare_file
+    globals()["XL_COST_FILE"] = XL_cost
     globals()["XL_COST_LIBRARY_MODE"] = True
 
     try:
-        load(compare_file)
+        load(XL_cost)
     finally:
         globals()["XL_COST_LIBRARY_MODE"] = False
 
@@ -608,7 +608,7 @@ def main_driver():
     )
 
     ap.add_argument(
-        "--compare-file",
+        "--XL_cost",
         default="../XL_cost.sage",
         help="Path to XL_cost.sage.",
     )
@@ -646,7 +646,7 @@ def main_driver():
 
     args = ap.parse_args()
 
-    load_compare_file(args.compare_file)
+    load_XL_cost(args.XL_cost)
 
     if args.guessing_output != "none":
         write_latex_table(

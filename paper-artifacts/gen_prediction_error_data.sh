@@ -31,8 +31,8 @@ Usage: $0 [options]
 Options:
   --out-dir DIR          output directory [default: $OUT_DIR]
   --sage CMD             Sage command [default: $SAGE_BIN]
-  --compare FILE         xl_cost_compare.sage path [default: $XLCOST]
-  --xl-test FILE         XL_test executable [default: $XLTEST]
+  --XL_cost FILE         XL_cost.sage path [default: $XLCOST]
+  --XL_test FILE         XL_test executable [default: $XLTEST]
   --jobs N               GNU parallel jobs [default: $JOBS]
   --repeats N            number of seeds/repeats [default: $REPEATS]
   --m-factor N           use m=N*n [default: $M_FACTOR]
@@ -50,8 +50,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --out-dir) OUT_DIR=$2; shift 2 ;;
     --sage) SAGE_BIN=$2; shift 2 ;;
-    --compare) XLCOST=$2; shift 2 ;;
-    --xl-test) XLTEST=$2; shift 2 ;;
+    --XL_cost) XLCOST=$2; shift 2 ;;
+    --XL_test) XLTEST=$2; shift 2 ;;
     --jobs) JOBS=$2; shift 2 ;;
     --repeats) REPEATS=$2; shift 2 ;;
     --m-factor) M_FACTOR=$2; shift 2 ;;

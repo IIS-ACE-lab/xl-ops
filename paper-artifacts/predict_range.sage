@@ -1,5 +1,4 @@
 #!/usr/bin/env sage
-# vim: syntax=python
 
 import argparse
 import csv
@@ -94,7 +93,7 @@ def make_prediction_only_run_for_range(q_value, n_value, m_value, D_value, bit_c
     """
     Construct a minimal XLRun object for prediction only.
 
-    Requires XLRun from xl_cost_compare.sage to be in scope.
+    Requires XLRun from XL_cost.sage to be in scope.
     """
     return XLRun(
         q=q_value,
@@ -144,14 +143,14 @@ def main():
     )
 
     ap.add_argument(
-        "--compare-file",
-        default="xl_cost_compare.sage",
-        help="Path to xl_cost_compare.sage",
+        "--XL_cost",
+        default="../XL_cost.sage",
+        help="Path to XL_cost.sage",
     )
 
     ap.add_argument(
         "--exe",
-        default="./XL_test",
+        default="../src/bin/XL_test",
         help="Path to XL_test executable",
     )
 
@@ -207,11 +206,11 @@ def main():
 
     fields = [args.field] if args.field is not None else [2, 31, 256]
 
-    # Load xl_cost_compare.sage once. This is what avoids repeated Sage startup.
+    # Load XL_cost.sage once. This is what avoids repeated Sage startup.
     globals()["XL_COST_LIBRARY_MODE"] = True
     try:
-        globals()["XL_COST_FILE"] = "../xl_cost_formulas.sage"
-        load(args.compare_file)
+        globals()["XL_COST_FILE"] = "../XL_cost_formulas.sage"
+        load(args.XL_cost)
     finally:
         globals()["XL_COST_LIBRARY_MODE"] = False
 
