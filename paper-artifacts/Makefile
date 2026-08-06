@@ -10,10 +10,13 @@
 SAGE := sage
 PYTHON := python3
 
-ART := paper-artifacts
-DATA := data/processed
+ART := .
+DATA := data
 
-XLTEST := src/bin/XL-test
+XLTEST := ../src/bin/XL_test
+
+XLCOST := ../XL_cost.sage
+XLCOSTFORMULAS := ../XL_cost_formulas.sage
 
 N_MIN := 10
 N_MAX := 400
@@ -25,7 +28,7 @@ GET_D_FILES := \
 	$(DATA)/get_D-31.txt \
 	$(DATA)/get_D-256.txt
 
-ERROR_DATA := data/raw/prediction-errors
+ERROR_DATA := prediction-errors
 ERROR_DATA_STAMP := $(ERROR_DATA)/.generated
 ERROR_TABLE := $(ART)/tables/prediction_error_table.tex
 ERROR_FIGURE := $(ART)/figures/prediction_error_plots.tex
@@ -61,7 +64,7 @@ METADATA_FILES := \
 	$(ART)/CODE_VERSION \
 	$(ART)/CODE_STATUS
 
-.PHONY: all build data tables formulas figures split-predictions \
+.PHONY: all build all-data all-tables all-formulas all-figures split-predictions \
         prediction-error-artifacts metadata paper-artifacts \
         clean-artifacts clean-data clean-error-data
 
@@ -71,11 +74,11 @@ all: paper-artifacts
 # Directory targets
 # --------------------------------------------------------------------
 
-$(DATA):
-	mkdir -p $@
-
-$(ART):
-	mkdir -p $@
+#$(DATA):
+#	mkdir -p $@
+#
+#$(ART):
+#	mkdir -p $@
 
 $(ART)/data:
 	mkdir -p $@
@@ -103,7 +106,7 @@ $(SPLIT_PRED_DIR):
 SRC_FILES := $(wildcard src/*.c src/*.h src/**/*.c src/**/*.h src/Makefile)
 
 $(XLTEST): $(SRC_FILES)
-	$(MAKE) -C src
+	$(MAKE) -C ../src
 
 build: $(XLTEST)
 
@@ -111,9 +114,9 @@ build: $(XLTEST)
 # Prediction CSV
 # --------------------------------------------------------------------
 
-$(PRED_CSV): $(XLTEST) sage/xl_predict_range.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage | $(DATA)
-	$(SAGE) sage/xl_predict_range.sage \
-		--compare-file sage/xl_cost_compare.sage \
+$(PRED_CSV): $(XLTEST) xl_predict_range.sage $(XLCOST) $(XLCOSTFORMULAS) | $(DATA)
+	$(SAGE) xl_predict_range.sage \
+		--compare-file $(XLCOST) \
 		--exe $(XLTEST) \
 		--n-min $(N_MIN) \
 		--n-max $(N_MAX) \
@@ -124,71 +127,72 @@ $(PRED_CSV): $(XLTEST) sage/xl_predict_range.sage sage/xl_cost_compare.sage sage
 # get_D lookup files
 # --------------------------------------------------------------------
 
-$(DATA)/get_D-%.txt: sage/get_D.sage | $(DATA)
+$(DATA)/get_D-%.txt: get_D.sage | $(DATA)
 	q=$*; \
 	{ \
 	  echo "import sys"; \
 	  for i in $$(seq $(N_MIN) $(N_MAX)); do \
 	    m=$$(($(M_FACTOR) * i)); \
 	    printf "sys.argv = ['get_D.sage', '-q', '%s', '-n', '%s', '-m', '%s', '-s']\n" "$$q" "$$i" "$$m"; \
-	    echo 'load("sage/get_D.sage")'; \
+	    echo 'load("get_D.sage")'; \
 	  done; \
 	} | $(SAGE) | tail -n +5 | sed 's/^\(sage: \)\+//g' > $@
 
-data: $(PRED_CSV) $(GET_D_FILES)
+all-data: $(PRED_CSV) $(GET_D_FILES)
 
 # --------------------------------------------------------------------
 # Copy processed data into paper-artifacts/data
 # --------------------------------------------------------------------
 
-$(ART)/data/predictions-allq-m2n-n010-400.csv: $(PRED_CSV) | $(ART)/data
-	cp $< $@
-
-$(ART)/data/get_D-%.txt: $(DATA)/get_D-%.txt | $(ART)/data
-	cp $< $@
+#$(ART)/data/predictions-allq-m2n-n010-400.csv: $(PRED_CSV) | $(ART)/data
+#	cp $< $@
+#
+#$(ART)/data/get_D-%.txt: $(DATA)/get_D-%.txt | $(ART)/data
+#	cp $< $@
 
 # --------------------------------------------------------------------
 # Paper tables
 # --------------------------------------------------------------------
 
-$(ART)/tables/fukuoka_table.tex: sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
-	$(SAGE) sage/generate_guessing_table.sage \
-		--compare-file sage/xl_cost_compare.sage \
+$(ART)/tables/fukuoka_table.tex: generate_guessing_table.sage $(XLCOST) $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
+	$(SAGE) generate_guessing_table.sage \
+		--compare-file $(XLCOST) \
 		--exe $(XLTEST) \
 		--guessing-output none \
 		--fukuoka-output $@
 
-$(ART)/tables/guessing_table.tex: sage/generate_guessing_table.sage sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
-	$(SAGE) sage/generate_guessing_table.sage \
-		--compare-file sage/xl_cost_compare.sage \
+$(ART)/tables/guessing_table.tex: generate_guessing_table.sage $(XLCOST) $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
+	$(SAGE) generate_guessing_table.sage \
+		--compare-file $(XLCOST) \
 		--exe $(XLTEST) \
 		--guessing-output $@
 
-$(ART)/tables/op-costs.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/tables
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/tables/op-costs.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/tables
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--op-cost \
 		--xl-test $(XLTEST) \
 		> $@
 
 
-tables: $(TABLE_FILES) $(PAPER_DATA_FILES)
+all-tables: $(TABLE_FILES) $(PAPER_DATA_FILES)
 
 # --------------------------------------------------------------------
 # Optional prediction-error artifacts
 # --------------------------------------------------------------------
 
-$(ERROR_DATA_STAMP): scripts/gen_prediction_error_data.sh sage/xl_cost_compare.sage sage/xl_cost_formulas.sage $(XLTEST)
+$(ERROR_DATA_STAMP): gen_prediction_error_data.sh $(XLCOST) $(XLCOSTFORMULAS) $(XLTEST)
 	mkdir -p $(ERROR_DATA)
-	bash scripts/gen_prediction_error_data.sh \
+	bash gen_prediction_error_data.sh \
 		--out-dir $(ERROR_DATA) \
 		--sage $(SAGE) \
-		--compare sage/xl_cost_compare.sage \
+		--compare $(XLCOST) \
 		--xl-test $(XLTEST) \
 		--jobs 90% \
 		--repeats 100
 
-$(ERROR_TABLE) $(ERROR_FIGURE): scripts/analyze_prediction_errors.py $(ERROR_DATA_STAMP) | $(ART)/tables $(ART)/figures
-	$(PYTHON) scripts/analyze_prediction_errors.py \
+$(ERROR_TABLE) $(ERROR_FIGURE): analyze_prediction_errors.py $(ERROR_DATA_STAMP) | $(ART)/tables $(ART)/figures
+	$(PYTHON) analyze_prediction_errors.py \
 		--input-dir $(ERROR_DATA) \
 		--table-output $(ERROR_TABLE) \
 		--figure-output $(ERROR_FIGURE) \
@@ -200,60 +204,67 @@ prediction-error-artifacts: $(ERROR_TABLE) $(ERROR_FIGURE)
 # LaTeX formula snippets
 # --------------------------------------------------------------------
 
-$(ART)/formulas/table-I.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/table-I.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--table-I --style single-fraction \
 		> $@
 
-$(ART)/formulas/table-II.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/table-II.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--table-II --style sage \
 		> $@
 
-$(ART)/formulas/op-formulas-base.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/op-formulas-base.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--all-base --style sage \
 		> $@
 
-$(ART)/formulas/op-formulas-const.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/op-formulas-const.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--all-const --style sage \
 		> $@
 
-$(ART)/formulas/op-formulas-const-bucket.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/op-formulas-const-bucket.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--all-const-bucket --style sage \
 		> $@
 
-$(ART)/formulas/bm-extra.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/bm-extra.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--extra-BM --style factor \
 		> $@
 
-$(ART)/formulas/all-bit-ops.tex: sage/xl_latex_formulas.sage sage/xl_cost_formulas.sage $(XLTEST) | $(ART)/formulas
-	$(SAGE) sage/xl_latex_formulas.sage \
+$(ART)/formulas/all-bit-ops.tex: xl_latex_formulas.sage $(XLCOSTFORMULAS) $(XLTEST) | $(ART)/formulas
+	$(SAGE) xl_latex_formulas.sage \
+		--formula-file $(XLCOSTFORMULAS) \
 		--bit-costs --xl-test $(XLTEST) --style sage --inline-extra-BM \
 		> $@
 
-formulas: $(FORMULA_FILES)
+all-formulas: $(FORMULA_FILES)
 
 # --------------------------------------------------------------------
 # Figure data and figure snippets
 # --------------------------------------------------------------------
 
-$(SPLIT_SENTINEL): $(PRED_CSV) scripts/split_predictions.sh | $(SPLIT_PRED_DIR)
-	bash scripts/split_predictions.sh $(PRED_CSV) $(SPLIT_PRED_DIR)
+$(SPLIT_SENTINEL): $(PRED_CSV) split_predictions.sh | $(SPLIT_PRED_DIR)
+	bash split_predictions.sh $(PRED_CSV) $(SPLIT_PRED_DIR)
 	touch $@
 
 split-predictions: $(SPLIT_SENTINEL)
 
-$(ART)/figures/quotient_convergence_grid.tex: scripts/quotient_convergence_grid_csv.py $(PRED_CSV) $(GET_D_FILES) | $(ART)/figures
-	$(PYTHON) scripts/quotient_convergence_grid_csv.py \
+$(ART)/figures/quotient_convergence_grid.tex: quotient_convergence_grid_csv.py $(PRED_CSV) $(GET_D_FILES) | $(ART)/figures
+	$(PYTHON) quotient_convergence_grid_csv.py \
 		--csv $(PRED_CSV) \
 		--get-d-dir $(DATA) \
 		--output $@
 
-figures: $(FIGURE_FILES) split-predictions
+all-figures: $(FIGURE_FILES) split-predictions
 
 # --------------------------------------------------------------------
 # Provenance metadata
@@ -275,14 +286,14 @@ metadata: $(METADATA_FILES)
 # Top-level artifact target
 # --------------------------------------------------------------------
 
-paper-artifacts: tables formulas figures prediction-error-artifacts metadata
+paper-artifacts: all-tables all-formulas all-figures prediction-error-artifacts metadata
 
 # --------------------------------------------------------------------
 # Cleaning
 # --------------------------------------------------------------------
 
 clean-artifacts:
-	rm -rf $(ART)
+	rm -rf $(ART)/tables $(ART)/formulas $(ART)/figures
 
 clean-data:
 	rm -rf $(DATA)

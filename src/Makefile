@@ -12,7 +12,7 @@ BIN_DIR := bin
 SRCS := $(wildcard *.cpp)
 
 # List ALL files that contain a main()
-MAIN_SRCS := XL-test.cpp
+MAIN_SRCS := XL_test.cpp
 
 # Everything else is shared code
 COMMON_SRCS := $(filter-out $(MAIN_SRCS), $(SRCS))

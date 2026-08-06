@@ -210,6 +210,7 @@ def main():
     # Load xl_cost_compare.sage once. This is what avoids repeated Sage startup.
     globals()["XL_COST_COMPARE_LIBRARY_MODE"] = True
     try:
+        globals()["XL_COST_COMPARE_FILE"] = "../xl_cost_formulas.sage"
         load(args.compare_file)
     finally:
         globals()["XL_COST_COMPARE_LIBRARY_MODE"] = False

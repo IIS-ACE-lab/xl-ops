@@ -21,7 +21,7 @@ def compare_script_dir():
 
 FORMULA_FILE = globals().get(
     "XL_COST_FORMULAS_FILE",
-    os.path.join(compare_script_dir(), "xl_cost_formulas.sage"),
+    os.path.join(compare_script_dir(), "XL_cost_formulas.sage"),
 )
 
 load(FORMULA_FILE)

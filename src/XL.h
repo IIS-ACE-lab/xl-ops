@@ -20,9 +20,9 @@
 
 #include "field.h"
 
-#include "GF2-const.h"
-#include "GF31-const.h"
-#include "GF256-const.h"
+#include "GF2_const.h"
+#include "GF31_const.h"
+#include "GF256_const.h"
 
 using namespace std;
 
