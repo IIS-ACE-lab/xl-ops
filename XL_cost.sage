@@ -10,8 +10,8 @@ import subprocess
 from typing import Dict, Optional
 
 def compare_script_dir():
-    if "XL_COST_COMPARE_FILE" in globals():
-        return os.path.dirname(os.path.abspath(globals()["XL_COST_COMPARE_FILE"]))
+    if "XL_COST_FILE" in globals():
+        return os.path.dirname(os.path.abspath(globals()["XL_COST_FILE"]))
 
     try:
         return os.path.dirname(os.path.abspath(__file__))
@@ -79,8 +79,19 @@ class Prediction:
 
 
 # ---------------------------------------------------------------------------
-# Running XL-test
+# Running XL_test
 # ---------------------------------------------------------------------------
+
+def ensure_xl_test_built(exe_path):
+    from pathlib import Path
+
+    exe_path = Path(exe_path).resolve()
+    project_root = exe_path.parents[2]  # adjust to your layout
+
+    subprocess.run(
+        ["make", "-C", str(project_root) + "/src"],
+        check=True,
+    )
 
 def run_xl_test(
     exe: str,
@@ -114,7 +125,7 @@ def run_xl_test(
 
     if proc.returncode != 0:
         raise RuntimeError(
-            "XL-test failed\n"
+            "XL_test failed\n"
             f"command: {' '.join(cmd)}\n"
             f"return code: {proc.returncode}\n"
             f"stdout:\n{proc.stdout}\n"
@@ -136,7 +147,7 @@ def run_xl_test_f_cost(exe: str, n_value: int, m_value, q_value: int) -> str:
 
     if p.returncode != 0:
         raise SystemExit(
-            "XL-test --f-cost failed.\n"
+            "XL_test --f-cost failed.\n"
             f"command: {' '.join(cmd)}\n"
             f"return code: {p.returncode}\n"
             f"stdout:\n{p.stdout}\n"
@@ -155,7 +166,7 @@ def require_match(pattern: str, text: str, name: str) -> re.Match:
         excerpt = "\n".join(text.splitlines()[:40])
         raise ValueError(
             f"Could not parse {name} using pattern: {pattern}\n"
-            f"First lines of XL-test output were:\n{excerpt}"
+            f"First lines of XL_test output were:\n{excerpt}"
         )
     return match
 
@@ -431,11 +442,11 @@ def mul_const_cost_for_prediction(run: XLRun, const: bool, bucket: bool) -> floa
 
     In plain const mode, M_fixed counts multiplications by Macaulay
     constants and uses the average constant-multiplication cost reported by
-    XL-test.
+    XL_test.
 
     In const+bucket mode, M_fixed counts only bucket-combine
     multiplications by constants 2,...,q-1.  The average reported by
-    XL-test is over all q field elements, with constants 0 and 1 costing
+    XL_test is over all q field elements, with constants 0 and 1 costing
     zero, so the conditional average over constants >1 is
 
         c_mul_const,>1 = c_mul_const * q/(q-2).
@@ -507,7 +518,7 @@ def effective_mul_const_from_macaulay(run: XLRun, const: bool, bucket: bool) -> 
         Macaulay mul bit ops / Z_q
 
     For bucket mode this may need a different denominator, depending on
-    what exactly XL-test prints for the diagnostic.
+    what exactly XL_test prints for the diagnostic.
     """
     if run.macaulay_mul_bit_ops is None:
         return None
@@ -558,7 +569,7 @@ def bucket_A_W_from_macaulay_not_zero(run: XLRun) -> Optional[float]:
         ((q - 1)/q) Z_q.
 
     With runtime data, replace that expected value by the actual diagnostic
-    printed by XL-test:
+    printed by XL_test:
 
         N_nonzero = Macaulay not zero.
 
@@ -586,7 +597,7 @@ def mul_const_cost_gt1_from_nominal(q_value: int, nominal_mul_const: float) -> O
     into the average conditioned on constants > 1.
 
     This assumes constants 0 and 1 cost zero in the average reported by
-    XL-test, which is the convention used in the bucket diagnostic.
+    XL_test, which is the convention used in the bucket diagnostic.
     """
     qv = int(q_value)
     if qv <= 2:
@@ -637,7 +648,7 @@ def apply_runtime_data_for_regular_prediction(
 
         if eff is None:
             raise SystemExit(
-                "--use-macaulay-runtime-data requested, but XL-test output did "
+                "--use-macaulay-runtime-data requested, but XL_test output did "
                 "not contain a usable 'Macaulay mul bit ops' diagnostic."
             )
 
@@ -650,7 +661,7 @@ def apply_runtime_data_for_regular_prediction(
     if A_W_data is None:
         raise SystemExit(
             "--use-macaulay-runtime-data requested for --const --bucket, but "
-            "XL-test output did not contain a usable 'Macaulay not zero' diagnostic."
+            "XL_test output did not contain a usable 'Macaulay not zero' diagnostic."
         )
 
     run.bucket_A_W_nominal = select_nominal_A_W_count(
@@ -1442,7 +1453,7 @@ def print_report(run: XLRun, pred: Prediction, const: bool, bucket: bool) -> Non
     print("Notes")
     print("=====")
     print("S means subtraction.  The formula predicts add, sub, mul, inv, and const/mixed mul.")
-    print("The counter-derived measured bit-op check also includes dbl counts reported by XL-test.")
+    print("The counter-derived measured bit-op check also includes dbl counts reported by XL_test.")
 
 
 def fmt_pred_value(x):
@@ -1460,7 +1471,7 @@ def fmt_pred_value(x):
 
 def fmt_measured_value(x):
     """
-    Measured XL-test counters should already be integers.
+    Measured XL_test counters should already be integers.
     """
     try:
         return str(ZZ(x))
@@ -1471,7 +1482,7 @@ def print_wrapper_prediction(run: XLRun, pred: Prediction, const: bool, bucket: 
     """
     Compact wrapper-mode prediction output.
 
-    The raw XL-test output is printed separately. This appends measured values
+    The raw XL_test output is printed separately. This appends measured values
     together with predictions in a machine-readable-ish format:
 
         GF:
@@ -1630,10 +1641,10 @@ def print_pretty_prediction(run, pred, const=False, bucket=False):
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Run XL-test and compare measured costs to Sage prediction formulas."
+        description="Run XL_test and compare measured costs to Sage prediction formulas."
     )
 
-    ap.add_argument("--exe", default="../src/bin/XL-test", help="Path to XL-test executable")
+    ap.add_argument("--exe", default="src/bin/XL_test", help="Path to XL_test executable")
     ap.add_argument("-q", "--field", type=int, required=True)
     ap.add_argument("-n", type=int, required=True)
     ap.add_argument("-m", type=int, required=True)
@@ -1644,7 +1655,7 @@ def main() -> None:
     ap.add_argument("-b", "--bucket", action="store_true")
     ap.add_argument("--trace", action="store_true")
 
-    ap.add_argument("--show-raw", action="store_true", help="Print raw XL-test output before the report")
+    ap.add_argument("--show-raw", action="store_true", help="Print raw XL_test output before the report")
     ap.add_argument(
         "--use-macaulay-runtime-data",
         action="store_true",
@@ -1660,15 +1671,15 @@ def main() -> None:
         "--wrapper",
         action="store_true",
         help=(
-            "Wrapper mode: echo XL-test output verbatim, then append compact "
-            "prediction lines in the same style as XL-test counters."
+            "Wrapper mode: echo XL_test output verbatim, then append compact "
+            "prediction lines in the same style as XL_test counters."
         ),
     )
     ap.add_argument(
         "--pred",
         action="store_true",
         help=(
-            "Prediction-only mode: run XL-test with '-q FIELD --f-cost' to get "
+            "Prediction-only mode: run XL_test with '-q FIELD --f-cost' to get "
             "primitive bit costs, then print only predicted counters with "
             "measured values set to 0."
         ),
@@ -1677,6 +1688,11 @@ def main() -> None:
         "--pretty",
         action="store_true",
         help="With --pred, print a human-readable prediction summary including log2 values.",
+    )
+    ap.add_argument(
+        "--no-build",
+        action="store_true",
+        help="Do not run make before invoking XL-test.",
     )
 
     args = ap.parse_args()
@@ -1690,8 +1706,11 @@ def main() -> None:
     if args.pred and args.use_macaulay_runtime_data:
         raise SystemExit(
             "--pred cannot be combined with --use-macaulay-runtime-data, "
-            "because XL-test --f-cost does not produce Macaulay runtime diagnostics."
+            "because XL_test --f-cost does not produce Macaulay runtime diagnostics."
         )
+
+    if not args.no_build:
+        ensure_xl_test_built(args.exe)
 
     if args.pred:
         raw_f_cost = run_xl_test_f_cost(args.exe, args.n, args.m, args.field)
@@ -1773,6 +1792,6 @@ def main() -> None:
     print_report(run, pred, const=args.const, bucket=args.bucket)
 
 
-if __name__ == "__main__" and not globals().get("XL_COST_COMPARE_LIBRARY_MODE", False):
+if __name__ == "__main__" and not globals().get("XL_COST_LIBRARY_MODE", False):
     main()
 

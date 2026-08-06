@@ -7,12 +7,12 @@ set -euo pipefail
 #   data/raw/prediction-errors
 #
 # Filenames keep the historical format expected by analyze_prediction_errors.py:
-#   XL-test-<seed>-<q>-<nn>[-c|-c-b].txt
+#   XL_test-<seed>-<q>-<nn>[-c|-c-b].txt
 
 SAGE_BIN=${SAGE_BIN:-sage}
-XL_COMPARE=${XL_COMPARE:-sage/xl_cost_compare.sage}
-XLTEST=${XLTEST:-src/bin/XL-test}
-OUT_DIR=${OUT_DIR:-data/raw/prediction-errors}
+XLCOST=${XLCOST:-XL_cost.sage}
+XLTEST=${XLTEST:-../src/bin/XL_test}
+OUT_DIR=${OUT_DIR:-prediction-errors}
 JOBS=${JOBS:-90%}
 REPEATS=${REPEATS:-100}
 M_FACTOR=${M_FACTOR:-2}
@@ -31,8 +31,8 @@ Usage: $0 [options]
 Options:
   --out-dir DIR          output directory [default: $OUT_DIR]
   --sage CMD             Sage command [default: $SAGE_BIN]
-  --compare FILE         xl_cost_compare.sage path [default: $XL_COMPARE]
-  --xl-test FILE         XL-test executable [default: $XLTEST]
+  --compare FILE         xl_cost_compare.sage path [default: $XLCOST]
+  --xl-test FILE         XL_test executable [default: $XLTEST]
   --jobs N               GNU parallel jobs [default: $JOBS]
   --repeats N            number of seeds/repeats [default: $REPEATS]
   --m-factor N           use m=N*n [default: $M_FACTOR]
@@ -50,7 +50,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --out-dir) OUT_DIR=$2; shift 2 ;;
     --sage) SAGE_BIN=$2; shift 2 ;;
-    --compare) XL_COMPARE=$2; shift 2 ;;
+    --compare) XLCOST=$2; shift 2 ;;
     --xl-test) XLTEST=$2; shift 2 ;;
     --jobs) JOBS=$2; shift 2 ;;
     --repeats) REPEATS=$2; shift 2 ;;
@@ -98,7 +98,7 @@ run_one() {
 
   echo "repeat=$repeat q=$q n=$n m=$m mode=$mode seed=$seed -> $out" >&2
 
-  "$SAGE_BIN" "$XL_COMPARE" \
+  "$SAGE_BIN" "$XLCOST" \
     --exe "$XLTEST" \
     -q "$q" -n "$n" -m "$m" \
     --seed "$seed" \
@@ -108,7 +108,7 @@ run_one() {
 }
 
 export -f run_one
-export SAGE_BIN XL_COMPARE XLTEST OUT_DIR M_FACTOR USE_GF2_OPT
+export SAGE_BIN XLCOST XLTEST OUT_DIR M_FACTOR USE_GF2_OPT
 
 make_jobs() {
   local repeat n q mode

@@ -204,7 +204,7 @@ def main():
 
     parser.add_argument(
         "--xl-test",
-        default="bin/XL-test",
+        default="../src/bin/XL_test",
     )
 
     parser.add_argument(

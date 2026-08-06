@@ -239,7 +239,7 @@ def main():
 
     parser.add_argument(
         "--csv",
-        default="XL-test.csv",
+        default="XL_test.csv",
         help="Combined CSV file with columns q,n,m,D,variant,pred_bit_ops",
     )
 

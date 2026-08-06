@@ -10,9 +10,9 @@ import re
 
 def run_xl_test_f_cost_with_params(exe, q_value, n_value, m_value):
     """
-    Run XL-test only in --f-cost mode for the selected q,n,m.
+    Run XL_test only in --f-cost mode for the selected q,n,m.
 
-    This avoids full XL-test runs but still lets XL-test determine D and
+    This avoids full XL_test runs but still lets XL_test determine D and
     print the primitive field-operation bit costs.
     """
     cmd = [
@@ -33,7 +33,7 @@ def run_xl_test_f_cost_with_params(exe, q_value, n_value, m_value):
 
     if p.returncode != 0:
         raise SystemExit(
-            "XL-test --f-cost failed.\n"
+            "XL_test --f-cost failed.\n"
             f"command: {' '.join(cmd)}\n"
             f"return code: {p.returncode}\n"
             f"stdout:\n{p.stdout}\n"
@@ -45,7 +45,7 @@ def run_xl_test_f_cost_with_params(exe, q_value, n_value, m_value):
 
 def parse_f_cost_output_local(text):
     """
-    Local parser for XL-test --f-cost output.
+    Local parser for XL_test --f-cost output.
 
     Returns:
         {
@@ -151,8 +151,8 @@ def main():
 
     ap.add_argument(
         "--exe",
-        default="./XL-test",
-        help="Path to XL-test executable",
+        default="./XL_test",
+        help="Path to XL_test executable",
     )
 
     ap.add_argument(
@@ -208,12 +208,12 @@ def main():
     fields = [args.field] if args.field is not None else [2, 31, 256]
 
     # Load xl_cost_compare.sage once. This is what avoids repeated Sage startup.
-    globals()["XL_COST_COMPARE_LIBRARY_MODE"] = True
+    globals()["XL_COST_LIBRARY_MODE"] = True
     try:
-        globals()["XL_COST_COMPARE_FILE"] = "../xl_cost_formulas.sage"
+        globals()["XL_COST_FILE"] = "../xl_cost_formulas.sage"
         load(args.compare_file)
     finally:
-        globals()["XL_COST_COMPARE_LIBRARY_MODE"] = False
+        globals()["XL_COST_LIBRARY_MODE"] = False
 
     variants = [v.strip() for v in args.variants.split(",") if v.strip()]
     for v in variants:
@@ -245,7 +245,7 @@ def main():
         
                 if fcost["n"] != n_value or fcost["m"] != m_value:
                     raise SystemExit(
-                        "XL-test --f-cost returned unexpected n,m.\n"
+                        "XL_test --f-cost returned unexpected n,m.\n"
                         f"requested q={q_value}, n={n_value}, m={m_value}\n"
                         f"returned  q={fcost['q']}, n={fcost['n']}, m={fcost['m']}"
                     )

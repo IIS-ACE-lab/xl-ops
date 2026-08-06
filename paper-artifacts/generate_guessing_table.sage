@@ -96,43 +96,43 @@ VARIANTS = [
 
 
 # --------------------------------------------------------------------
-# Loading xl_cost_compare.sage as a library
+# Loading XL_cost.sage as a library
 # --------------------------------------------------------------------
 
 def load_compare_file(compare_file):
     compare_file = os.path.abspath(compare_file)
 
-    globals()["XL_COST_COMPARE_FILE"] = compare_file
-    globals()["XL_COST_COMPARE_LIBRARY_MODE"] = True
+    globals()["XL_COST_FILE"] = compare_file
+    globals()["XL_COST_LIBRARY_MODE"] = True
 
     try:
         load(compare_file)
     finally:
-        globals()["XL_COST_COMPARE_LIBRARY_MODE"] = False
+        globals()["XL_COST_LIBRARY_MODE"] = False
 
 
 # --------------------------------------------------------------------
-# Calling xl_cost_compare.sage in the same Sage process
+# Calling XL_cost.sage in the same Sage process
 # --------------------------------------------------------------------
 
-def call_xl_cost_compare_pred(exe, q, n, m, flags):
+def call_xl_cost_pred(exe, q, n, m, flags):
     """
-    Call xl_cost_compare.sage main() in the current Sage process.
+    Call XL_cost.sage main() in the current Sage process.
 
-    This preserves the original xl_cost_compare.sage logic, including:
-      - running XL-test --f-cost in --pred mode,
-      - parsing D from XL-test,
+    This preserves the original XL_cost.sage logic, including:
+      - running XL_test --f-cost in --pred mode,
+      - parsing D from XL_test,
       - selecting formulas,
       - computing predicted bit-operation counts.
 
     Returns:
       {
         "pred_cost": integer predicted bit-operation count,
-        "D": operating degree parsed from XL-test --f-cost output,
+        "D": operating degree parsed from XL_test --f-cost output,
       }
     """
     argv = [
-        "xl_cost_compare.sage",
+        "XL_cost.sage",
         "--exe", exe,
         "-q", str(q),
         "-n", str(n),
@@ -161,7 +161,7 @@ def call_xl_cost_compare_pred(exe, q, n, m, flags):
     m_bitops = BITOPS_RE.search(out)
     if not m_bitops:
         raise RuntimeError(
-            "Could not parse predicted bit ops from xl_cost_compare output.\n"
+            "Could not parse predicted bit ops from XL_cost output.\n"
             f"argv: {' '.join(argv)}\n"
             f"output:\n{out}"
         )
@@ -169,7 +169,7 @@ def call_xl_cost_compare_pred(exe, q, n, m, flags):
     m_degree = DEGREE_RE.search(out)
     if not m_degree:
         raise RuntimeError(
-            "Could not parse D from xl_cost_compare output.\n"
+            "Could not parse D from XL_cost output.\n"
             f"argv: {' '.join(argv)}\n"
             f"output:\n{out}"
         )
@@ -224,7 +224,7 @@ def find_best_square_style(exe, q, m, flags, min_n=10):
     for k in range(2, m - min_n + 1):
         n = m - k
 
-        pred = call_xl_cost_compare_pred(
+        pred = call_xl_cost_pred(
             exe=exe,
             q=q,
             n=n,
@@ -288,7 +288,7 @@ def find_best_from_original_system(exe, q, n0, m0, flags, min_n=10):
         k_penalty = max(0, g - free_guesses)
 
         try:
-            pred = call_xl_cost_compare_pred(
+            pred = call_xl_cost_pred(
                 exe=exe,
                 q=q,
                 n=n_red,
@@ -542,7 +542,7 @@ def write_fukuoka_guessing_table(left_types, right_types, exe, out="-", min_n=10
     """
     Generate the Fukuoka table in the old two-column layout, but with:
       - optimized guessing,
-      - D from XL-test/xl_cost_compare,
+      - D from XL_test/XL_cost,
       - k for the minimizing const+bucket point,
       - explicit largest-broken/largest-provided section rows.
     """
@@ -602,21 +602,21 @@ def write_fukuoka_guessing_table(left_types, right_types, exe, out="-", min_n=10
 def main_driver():
     ap = argparse.ArgumentParser(
         description=(
-            "Generate guessing-comparison tables using xl_cost_compare.sage "
+            "Generate guessing-comparison tables using XL_cost.sage "
             "inside one Sage session."
         )
     )
 
     ap.add_argument(
         "--compare-file",
-        default="sage/xl_cost_compare.sage",
-        help="Path to xl_cost_compare.sage.",
+        default="../XL_cost.sage",
+        help="Path to XL_cost.sage.",
     )
 
     ap.add_argument(
         "--exe",
-        default="src/bin/XL-test",
-        help="Path to XL-test executable.",
+        default="../src/bin/XL_test",
+        help="Path to XL_test executable.",
     )
 
     ap.add_argument(

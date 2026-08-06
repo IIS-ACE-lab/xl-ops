@@ -1,12 +1,12 @@
-# `xl_cost_compare.sage`
+# `XL_cost.sage`
 
-`xl_cost_compare.sage` predicts the concrete bit-operation cost of XL with
+`XL_cost.sage` predicts the concrete bit-operation cost of XL with
 Wiedemann linear algebra and Berlekamp--Massey for a given field size and
 parameter set.
 
 ## Requirements
 
-Build `XL-test` first, for example:
+Build `XL_test` first, for example:
 
 ```sh
 make -C src
@@ -15,7 +15,7 @@ make -C src
 The examples below assume that the executable is available as:
 
 ```sh
-src/bin/XL-test
+src/bin/XL_test
 ```
 
 ## Basic prediction
@@ -26,8 +26,8 @@ Run the tool with `--pred` and provide the field size `q`, number of variables
 `n`, and number of equations `m`:
 
 ```sh
-sage sage/xl_cost_compare.sage \
-  --exe src/bin/XL-test \
+sage sage/XL_cost.sage \
+  --exe src/bin/XL_test \
   -q 256 -n 72 -m 74 \
   --pred --pretty
 ```
@@ -40,8 +40,8 @@ of the predicted bit-operation costs.
 Baseline model:
 
 ```sh
-sage sage/xl_cost_compare.sage \
-  --exe src/bin/XL-test \
+sage sage/XL_cost.sage \
+  --exe src/bin/XL_test \
   -q 256 -n 72 -m 74 \
   --pred --pretty
 ```
@@ -49,8 +49,8 @@ sage sage/xl_cost_compare.sage \
 Const model:
 
 ```sh
-sage sage/xl_cost_compare.sage \
-  --exe src/bin/XL-test \
+sage sage/XL_cost.sage \
+  --exe src/bin/XL_test \
   -q 256 -n 72 -m 74 \
   --pred --pretty -c
 ```
@@ -58,8 +58,8 @@ sage sage/xl_cost_compare.sage \
 Const+bucket model:
 
 ```sh
-sage sage/xl_cost_compare.sage \
-  --exe src/bin/XL-test \
+sage sage/XL_cost.sage \
+  --exe src/bin/XL_test \
   -q 256 -n 72 -m 74 \
   --pred --pretty -c -b
 ```

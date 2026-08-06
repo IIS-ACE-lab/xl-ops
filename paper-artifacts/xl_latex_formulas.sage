@@ -302,7 +302,7 @@ def print_extra_BM(tex):
 def run_xl_f_cost(xl_test_path, q_value):
     """
     Run:
-        XL-test -q q_value --f-cost
+        XL_test -q q_value --f-cost
 
     and return stdout.
     """
@@ -322,7 +322,7 @@ def run_xl_f_cost(xl_test_path, q_value):
 
     if proc.returncode != 0:
         raise RuntimeError(
-            "XL-test --f-cost failed\n"
+            "XL_test --f-cost failed\n"
             f"command: {' '.join(cmd)}\n"
             f"return code: {proc.returncode}\n"
             f"stdout:\n{proc.stdout}\n"
@@ -335,7 +335,7 @@ def run_xl_f_cost(xl_test_path, q_value):
 def parse_required_number(pattern, text, name):
     m = re.search(pattern, text, re.MULTILINE)
     if not m:
-        raise ValueError(f"Could not parse {name} from XL-test output")
+        raise ValueError(f"Could not parse {name} from XL_test output")
     s = m.group(1)
     if "." in s:
         return float(s)
@@ -345,7 +345,7 @@ def parse_required_number(pattern, text, name):
 def parse_f_cost_output(text):
     """
     Parse output of:
-        XL-test -q ... --f-cost
+        XL_test -q ... --f-cost
 
     Expected lines:
         bit ops add: ...
@@ -408,7 +408,7 @@ def field_name_latex(q_value):
 def print_operation_cost_table(xl_test_path):
     """
     Print LaTeX table with primitive bit-operation costs for GF(2), GF(31),
-    and GF(256), using XL-test --f-cost as the data source.
+    and GF(256), using XL_test --f-cost as the data source.
     """
     fields = [2, 31, 256]
 
@@ -845,7 +845,7 @@ def print_bit_cost_formulas(
     Print concrete bit-cost formulas for GF(2), GF(31), GF(256)
     and all three variants.
 
-    Uses XL-test --f-cost to obtain the primitive operation costs.
+    Uses XL_test --f-cost to obtain the primitive operation costs.
     """
     fields = [2, 31, 256]
     variants = ["base", "const", "buck"]
@@ -939,13 +939,13 @@ def main():
     parser.add_argument(
         "--op-cost",
         action="store_true",
-        help="Print primitive field-operation bit-cost table using XL-test --f-cost",
+        help="Print primitive field-operation bit-cost table using XL_test --f-cost",
     )
 
     parser.add_argument(
         "--xl-test",
-        default="./XL-test",
-        help="Path to XL-test executable for --op-cost",
+        default="./XL_test",
+        help="Path to XL_test executable for --op-cost",
     )
 
     parser.add_argument(

@@ -331,14 +331,14 @@ def print_summary(summary):
 def main():
     ap = argparse.ArgumentParser(
         description=(
-            "Analyze XL-test wrapper logs and generate a LaTeX summary table "
+            "Analyze XL_test wrapper logs and generate a LaTeX summary table "
             "and PGF/TikZ plot snippet."
         )
     )
     ap.add_argument(
         "--input-dir",
         default="data-comp",
-        help="Directory containing XL-test wrapper log .txt files.",
+        help="Directory containing XL_test wrapper log .txt files.",
     )
     ap.add_argument(
         "--table-output",
