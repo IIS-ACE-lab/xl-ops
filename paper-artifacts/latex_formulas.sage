@@ -669,15 +669,6 @@ def split_latex_terms(s):
 
 
 def latex_broken_rhs(rhs, terms_per_line=6, indent=r"&\quad "):
-    """
-    Turn an RHS LaTeX string into an aligned multi-line RHS.
-
-    Example output:
-        \begin{aligned}[t]
-          &term1 + term2 + term3 \\
-          &\quad + term4 - term5 + term6
-        \end{aligned}
-    """
     terms = split_latex_terms(rhs)
 
     if len(terms) <= terms_per_line:
