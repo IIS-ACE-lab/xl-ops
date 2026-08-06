@@ -2,7 +2,6 @@ q: 256  n: 8  m: 16  D: 4
 
 seed: 11054209454735193071
 field: 256
-const cost mode: average
 
 bit ops add: 8
 bit ops dbl: 3
@@ -16,13 +15,6 @@ sol: [233, 6, 193, 86, 229, 110, 119, 131]
 
 n 8  d 4  ncols 495  nrows 720
 num_cols: 495
-entries per row (before drop):
-44: 16
-45: 704
-
-entries per row (after drop):
-44: 16
-45: 478
 
 entries per row:
 44: 16

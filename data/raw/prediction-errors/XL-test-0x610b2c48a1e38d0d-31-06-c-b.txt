@@ -2,7 +2,6 @@ q: 31  n: 6  m: 12  D: 3
 
 seed: 6992731536888139021
 field: 31
-const cost mode: average
 
 bit ops add: 41
 bit ops dbl: 32
@@ -16,13 +15,6 @@ sol: [22, 22, 0, 0, 20, 10]
 
 n 6  d 3  ncols 84  nrows 84
 num_cols: 84
-entries per row (before drop):
-27: 12
-28: 72
-
-entries per row (after drop):
-27: 12
-28: 71
 
 entries per row:
 27: 12
