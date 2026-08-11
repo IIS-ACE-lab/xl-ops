@@ -132,7 +132,7 @@ def predict_total_bits_for_variant(run, variant):
     const, bucket = variant_flags(variant)
 
     pred = select_prediction(run, const=const, bucket=bucket)
-    pred = attach_bit_cost_prediction(pred, run)
+    pred = attach_bit_cost_prediction(pred, run, const=const, bucket=bucket)
 
     return pred.bit_ops_total
 

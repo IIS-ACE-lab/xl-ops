@@ -473,8 +473,8 @@ def mul_const_cost_for_prediction(run: XLRun, const: bool, bucket: bool) -> floa
 def attach_bit_cost_prediction(
     pred: Prediction,
     run: XLRun,
-    const: bool = False,
-    bucket: bool = False,
+    const: bool,
+    bucket: bool,
 ) -> Prediction:
     c = run.bit_costs
 
